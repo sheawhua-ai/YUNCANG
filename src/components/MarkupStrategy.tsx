@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, X, AlertCircle, ChevronDown, Search, ChevronRight } from "lucide-react";
+import { Plus, X, AlertCircle, ChevronDown, Search, ChevronRight, Upload } from "lucide-react";
 import { MultiSelectDropdown } from "./MultiSelectDropdown";
 import { CategoryMultiSelectDropdown } from "./CategoryMultiSelectDropdown";
 import { SearchableCombobox } from "./SearchableCombobox";
@@ -59,6 +59,12 @@ export function MarkupStrategy({ setActiveTab }: MarkupStrategyProps) {
           <p className="text-xs md:text-sm text-zinc-500">配置分销加价规则，并获取符合规则的商品至您的分销库</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
+          <button 
+            className="w-full sm:w-auto bg-white text-black border border-zinc-200 px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-zinc-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <Upload size={16} />
+            批量单品策略上传
+          </button>
           <button 
             onClick={() => setIsModalOpen(true)}
             className="w-full sm:w-auto bg-black text-white px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2"

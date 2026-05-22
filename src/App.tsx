@@ -12,6 +12,8 @@ import { WarehouseManagement } from './components/WarehouseManagement';
 import { DistributorOrderManagement } from './components/DistributorOrderManagement';
 import { ManifestCampaignManagement } from './components/ManifestCampaignManagement';
 import { ManifestOrderManagement } from './components/ManifestOrderManagement';
+import { ConfirmationManagement } from './components/ConfirmationManagement';
+import { WorkOrderManagement } from './components/WorkOrderManagement';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('self_product');
@@ -43,6 +45,7 @@ export default function App() {
           {/* 货单业务管理 */}
           {activeTab === 'manifest_campaign' && <ManifestCampaignManagement />}
           {activeTab === 'manifest_order' && <ManifestOrderManagement />}
+          {activeTab === 'manifest_confirmation' && <ConfirmationManagement />}
           
           {/* 基础设施 */}
           {activeTab === 'warehouse' && <WarehouseManagement />}

@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
-  ArrowLeft, Info, Calendar as CalendarIcon, User, Phone, Building2, CheckCircle2, ChevronRight, FileText, ChevronDown, ChevronUp, Image as ImageIcon, Check, Clock, X, MessageSquare, Filter, ChevronLeft, Package, Settings, CreditCard, Banknote, Search, Wrench
+  ArrowLeft, Info, Calendar as CalendarIcon, User, Phone, Building2, CheckCircle2, ChevronRight, FileText, ChevronDown, ChevronUp, Image as ImageIcon, Check, Clock, X, MessageSquare, Filter, ChevronLeft, Package, Settings, CreditCard, Banknote, Search, Wrench, Upload, Paperclip
 } from 'lucide-react';
-import { useWorkOrders, workOrderStore } from '../lib/workOrderStore';
+import { WorkOrderManagement } from './WorkOrderManagement';
+import { useWorkOrders } from '../lib/workOrderStore';
 
 const MOCK_ORDERS = [
   {
@@ -156,6 +157,7 @@ export function FinanceAudit() {
   const [settlementSearch, setSettlementSearch] = useState('');
   const [settlementStatus, setSettlementStatus] = useState('all');
   const [selectedSettlementOrderId, setSelectedSettlementOrderId] = useState<string | null>(null);
+  const [viewingWorkOrderAssociated, setViewingWorkOrderAssociated] = useState<string | null>(null);
 
   const [activeFlowTab, setActiveFlowTab] = useState<'order' | 'margin'>('order');
   const [showRechargeModal, setShowRechargeModal] = useState(false);
@@ -423,6 +425,21 @@ export function FinanceAudit() {
       </div>
 
       {/* Orders List / Horizontal Layout */}
+      <div className="mb-4 flex justify-between items-center bg-zinc-50 border border-zinc-200 p-4 rounded-sm">
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">财务快捷操作:</span>
+          <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-zinc-200 text-[10px] font-bold hover:border-black transition-colors">
+            <Upload size={14} />
+            上传线下付款水单记录
+          </button>
+          <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-zinc-200 text-[10px] font-bold hover:border-black transition-colors">
+            <Paperclip size={14} />
+            批量关联截图凭证 (微信/WhatsApp)
+          </button>
+        </div>
+        <div className="text-[10px] text-zinc-400 italic">结算说明: App订单固定RMB显示，EUR结算。PC后台支持多币种手动确认。</div>
+      </div>
+
       <div className="mb-8">
         <div className="bg-white border border-zinc-200 shadow-sm">
           <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-zinc-200 bg-zinc-50 text-[10px] font-bold text-zinc-500 uppercase tracking-widest items-center">
@@ -501,6 +518,8 @@ export function FinanceAudit() {
         </div>
       </div>
       </>
+      ) : activeMainTab === 'work_order' ? (
+        <WorkOrderManagement />
       ) : activeMainTab === 'withdrawal' ? (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
           {/* Account Sub-Tabs */}
@@ -954,84 +973,6 @@ export function FinanceAudit() {
             )}
           </div>
         </div>
-      ) : activeMainTab === 'work_order' ? (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="bg-white border border-zinc-200 shadow-sm">
-            <div className="p-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
-                <Wrench size={18} />
-                财务工单处理
-              </h2>
-              <div className="text-xs text-zinc-500">展示由跨部门（如销售组）发起的金额相关申请</div>
-            </div>
-            {workOrders.length === 0 ? (
-              <div className="p-12 text-center text-zinc-500">
-                <CheckCircle2 size={32} className="mx-auto mb-4 text-zinc-300" />
-                <div className="font-bold">暂无待处理工单</div>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm min-w-[800px]">
-                  <thead className="bg-zinc-50/50 text-xs text-zinc-500 uppercase tracking-wider">
-                    <tr>
-                      <th className="px-6 py-3 font-bold border-b border-zinc-200">工单号/申请时间</th>
-                      <th className="px-6 py-3 font-bold border-b border-zinc-200">关联货单/订单</th>
-                      <th className="px-6 py-3 font-bold border-b border-zinc-200">申请类型</th>
-                      <th className="px-6 py-3 font-bold border-b border-zinc-200 text-right">涉及金额</th>
-                      <th className="px-6 py-3 font-bold border-b border-zinc-200">说明理由</th>
-                      <th className="px-6 py-3 font-bold border-b border-zinc-200">状态</th>
-                      <th className="px-6 py-3 font-bold border-b border-zinc-200 text-center">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {workOrders.map((wo) => {
-                      const isCompleted = wo.status === 'completed';
-                      return (
-                        <tr key={wo.id} className="hover:bg-zinc-50 border-b border-zinc-100">
-                          <td className="px-6 py-4">
-                            <div className="font-mono text-xs font-bold">{wo.id}</div>
-                            <div className="text-xs text-zinc-400">{wo.date}</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="font-mono text-xs text-blue-600 hover:underline cursor-pointer">{wo.orderId}</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="text-[10px] bg-orange-50 text-orange-600 border border-orange-100 px-2 py-1 font-bold">{wo.type === 'refund_deposit' ? '退还多收定金' : wo.type}</span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <span className="font-bold text-red-600">- ¥ {wo.amount.toLocaleString()}</span>
-                          </td>
-                          <td className="px-6 py-4 text-xs text-zinc-600 max-w-[200px] truncate" title={wo.reason}>
-                            {wo.reason}
-                          </td>
-                          <td className="px-6 py-4">
-                            {isCompleted ? (
-                              <span className="bg-emerald-50 text-emerald-600 px-2 py-1 text-[10px] font-bold">已核销</span>
-                            ) : (
-                              <span className="bg-zinc-100 text-zinc-600 px-2 py-1 text-[10px] font-bold">待处理</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            {isCompleted ? (
-                              <span className="text-xs text-zinc-400 font-bold">已完成</span>
-                            ) : (
-                              <button 
-                                onClick={() => workOrderStore.complete(wo.id)}
-                                className="text-xs font-bold bg-black text-white px-3 py-1.5 hover:bg-zinc-800 transition-colors"
-                              >
-                                确认核销
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
       ) : null}
 
       {/* Settlement Details Drawer */}
@@ -1341,6 +1282,64 @@ export function FinanceAudit() {
           </div>
         </div>
       )}
+      {/* Associated Order Detail Drawer */}
+      {viewingWorkOrderAssociated && (() => {
+        // Mock order details
+        const mockProgress = [
+          { id: '1', time: '2024-05-10 10:00', description: '买家付款', amountChange: '+¥28,000' },
+          { id: '2', time: '2024-05-11 11:30', description: '供货商确认部分商品', amountChange: '-' },
+          { id: '3', time: '2024-05-12 09:15', description: '发起财务关联工单', amountChange: '-¥5,000' }
+        ];
+        return (
+          <div className="fixed inset-0 z-40 flex justify-end md:p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setViewingWorkOrderAssociated(null)}></div>
+            <div className="relative w-full md:w-[600px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 md:rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 md:px-8 py-4 md:py-6 border-b border-zinc-100">
+                <div>
+                  <h2 className="text-lg md:text-xl font-black uppercase tracking-tight mb-1">关联货单/订单详情</h2>
+                  <div className="text-xs text-zinc-500 font-mono">订单编号: {viewingWorkOrderAssociated}</div>
+                </div>
+                <button onClick={() => setViewingWorkOrderAssociated(null)} className="text-zinc-400 hover:text-black transition-colors"><X size={24} /></button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 md:p-8">
+                
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="bg-zinc-50 p-4 border border-zinc-100">
+                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">已收款金额</div>
+                    <div className="font-mono text-sm font-black text-green-600">¥ 28,000</div>
+                  </div>
+                  <div className="bg-zinc-50 p-4 border border-zinc-100">
+                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">已确认商品件数</div>
+                    <div className="font-mono text-sm font-black text-blue-600">2 件</div>
+                  </div>
+                </div>
+
+                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">订单进程</div>
+                <div className="space-y-3">
+                  {mockProgress.map(p => (
+                    <div key={p.id} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2 h-2 rounded-full bg-black mt-1.5"></div>
+                        <div className="w-px h-full bg-zinc-200 mt-1"></div>
+                      </div>
+                      <div className="pb-3 border-b border-zinc-100 flex-1">
+                        <div className="font-bold text-sm text-zinc-800 mb-1">{p.description}</div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-zinc-500 font-mono">{p.time}</span>
+                          <span className="text-[10px] font-bold text-zinc-600">{p.amountChange}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Detail Modals Drawer */}
       {activeDetailModal && (
         <div className="fixed inset-0 z-40 flex justify-end md:p-4">

@@ -230,15 +230,13 @@ export function MarketplaceOnSale() {
               <div className="w-full md:w-auto flex justify-between md:flex-col md:col-span-2 md:text-right mt-2 md:mt-0 p-3 md:p-0 bg-zinc-50 md:bg-transparent">
                 <div className="text-xs text-zinc-500 md:hidden">供货价</div>
                 <div className="text-right">
-                  <div className="text-sm md:text-xs font-bold">约 ¥2,800</div>
-                  <div className="text-[10px] text-zinc-400 mt-1">HK$3,000</div>
+                  <div className="text-sm md:text-xs font-bold">HK$3,000</div>
                 </div>
               </div>
               <div className="w-full md:w-auto flex justify-between md:flex-col md:col-span-2 md:text-right p-3 md:p-0 bg-zinc-50 md:bg-transparent border-t border-zinc-100 md:border-none">
                 <div className="text-xs text-zinc-500 md:hidden">集市最低出价</div>
                 <div className="text-right">
-                  <div className="text-sm md:text-xs font-bold text-zinc-400">约 ¥2,750</div>
-                  <div className="text-[10px] text-zinc-400 mt-1">HK$2,950</div>
+                  <div className="text-sm md:text-xs font-bold text-zinc-400">HK$2,950</div>
                 </div>
               </div>
               <div className="w-full md:w-auto md:col-span-1 flex flex-col md:items-center gap-2 mt-3 md:mt-0">

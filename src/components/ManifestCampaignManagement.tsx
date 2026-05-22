@@ -42,8 +42,8 @@ const CAMPAIGN_DETAILS = {
       orderedStock: 124,
       remainingStock: 88,
       skus: [
-        { id: 's1', name: '黑色 / 纳帕皮 / Mini', sku: 'T8013-BLK-MN', orderedStock: 82, remainingStock: 42 },
-        { id: 's2', name: '白色 / 亮面 / Mini', sku: 'T1003-WHT-MN', orderedStock: 42, remainingStock: 42 }
+        { id: 's1', name: '黑色 / 纳帕皮 / Mini', sku: 'T8013-BLK-MN', orderedStock: 82, remainingStock: 42, price: 9450.00 },
+        { id: 's2', name: '白色 / 亮面 / Mini', sku: 'T1003-WHT-MN', orderedStock: 42, remainingStock: 42, price: 9450.00 }
       ]
     },
     {
@@ -92,6 +92,31 @@ export function ManifestCampaignManagement() {
     });
   };
 
+  const handleProductPriceChange = (productId: string, newPrice: number) => {
+    setCampaignDetails(prev => {
+      const newProducts = prev.products.map(p => {
+        if (p.id === productId) {
+          return { ...p, price: newPrice };
+        }
+        return p;
+      });
+      return { ...prev, products: newProducts };
+    });
+  };
+
+  const handleSkuPriceChange = (productId: string, skuId: string, newPrice: number) => {
+    setCampaignDetails(prev => {
+      const newProducts = prev.products.map(p => {
+        if (p.id === productId) {
+          const newSkus = p.skus.map(s => s.id === skuId ? { ...s, price: newPrice } : s);
+          return { ...p, skus: newSkus };
+        }
+        return p;
+      });
+      return { ...prev, products: newProducts };
+    });
+  };
+
   const handleSaveAndReturn = () => {
     // In a real app, you would save the campaignDetails to the backend here
     setSelectedCampaignId(null);
@@ -102,6 +127,43 @@ export function ManifestCampaignManagement() {
   const [manualSearchQuery, setManualSearchQuery] = useState('');
   const [manualCategory, setManualCategory] = useState('all');
   const [manualBrand, setManualBrand] = useState('all');
+
+  const [matchedItems, setMatchedItems] = useState([
+    {
+      id: 'i1',
+      brand: 'Rolex',
+      name: 'Submariner Date',
+      code: 'RLX-126610-LN',
+      category: '手表 / 专业款',
+      originalPrice: '€ 8,200.00',
+      price: 67500.00,
+      stock: 12,
+      selected: true,
+      image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=100&q=80',
+      isTextPlaceholder: false
+    },
+    {
+      id: 'i2',
+      brand: 'Maison Margiela',
+      name: 'GLAM SLAM MINI',
+      code: 'S56WG0108PR818',
+      category: '包袋 / 迷你包',
+      originalPrice: '€ 1,200.00',
+      price: 9450.00,
+      stock: 124,
+      selected: true,
+      image: 'MAR',
+      isTextPlaceholder: true
+    }
+  ]);
+
+  const handleUpdateMatchedItem = (id: string, field: 'price' | 'stock', value: number) => {
+    setMatchedItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
+  const toggleMatchedItemSelection = (id: string) => {
+    setMatchedItems(prev => prev.map(item => item.id === id ? { ...item, selected: !item.selected } : item));
+  };
 
   const toggleProduct = (id: string) => {
     setExpandedProducts(prev => 
@@ -179,7 +241,15 @@ export function ManifestCampaignManagement() {
                     <div className="text-[10px] text-zinc-400 font-mono mt-0.5">SPU: {product.spu}</div>
                   </div>
                 </div>
-                <div className="col-span-2 text-right font-bold">¥{product.price.toLocaleString()}</div>
+                <div className="col-span-2 flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                  <span className="font-bold mr-1">¥</span>
+                  <input 
+                    type="number" 
+                    value={product.price}
+                    onChange={(e) => handleProductPriceChange(product.id, Number(e.target.value) || 0)}
+                    className="w-24 border border-zinc-200 px-2 py-1 text-right font-bold focus:border-black outline-none bg-white/50"
+                  />
+                </div>
                 <div className="col-span-2 text-center font-black text-lg">{product.orderedStock}</div>
                 <div className="col-span-2 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                   {product.skus.length > 0 ? (
@@ -203,7 +273,15 @@ export function ManifestCampaignManagement() {
                         <div className="font-bold text-xs">{sku.name}</div>
                         <div className="text-[10px] text-zinc-400 font-mono mt-0.5">SKU: {sku.sku}</div>
                       </div>
-                      <div className="col-span-2 text-right text-zinc-400">-</div>
+                      <div className="col-span-2 flex items-center justify-end text-zinc-600">
+                        <span className="font-bold mr-1 text-xs">¥</span>
+                        <input 
+                          type="number" 
+                          value={sku.price}
+                          onChange={(e) => handleSkuPriceChange(product.id, sku.id, Number(e.target.value) || 0)}
+                          className="w-20 border border-zinc-200 bg-white px-2 py-1 text-right text-xs font-bold focus:border-black outline-none" 
+                        />
+                      </div>
                       <div className="col-span-2 text-center font-bold">{sku.orderedStock}</div>
                       <div className="col-span-2 flex items-center justify-center">
                         <input 
@@ -520,54 +598,58 @@ export function ManifestCampaignManagement() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-100">
-                        <tr className="hover:bg-zinc-50">
-                          <td className="p-4"><input type="checkbox" className="accent-black" defaultChecked /></td>
-                          <td className="p-4">
-                            <span className="bg-black text-white text-[10px] font-bold px-2 py-1">已匹配</span>
-                          </td>
-                          <td className="p-4">
-                            <div className="w-10 h-10 bg-zinc-100 p-1">
-                              <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=100&q=80" className="w-full h-full object-contain mix-blend-multiply grayscale" />
-                            </div>
-                          </td>
-                          <td className="p-4 font-bold">Rolex</td>
-                          <td className="p-4">
-                            <div className="font-bold text-xs">Submariner Date</div>
-                            <div className="text-[10px] text-zinc-400">RLX-126610-LN</div>
-                          </td>
-                          <td className="p-4 text-xs text-zinc-500">手表 / 专业款</td>
-                          <td className="p-4 text-right font-mono text-xs text-zinc-500">€ 8,200.00</td>
-                          <td className="p-4 text-right font-mono font-bold">
-                            <div className="border border-zinc-200 px-2 py-1 inline-block">¥ 67,500.00</div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div className="border border-zinc-200 px-4 py-1 inline-block">12</div>
-                          </td>
-                        </tr>
-                        <tr className="hover:bg-zinc-50">
-                          <td className="p-4"><input type="checkbox" className="accent-black" defaultChecked /></td>
-                          <td className="p-4">
-                            <span className="bg-black text-white text-[10px] font-bold px-2 py-1">已匹配</span>
-                          </td>
-                          <td className="p-4">
-                            <div className="w-10 h-10 bg-zinc-100 p-1 flex items-center justify-center font-bold text-white bg-black">
-                              MAR
-                            </div>
-                          </td>
-                          <td className="p-4 font-bold">Maison Margiela</td>
-                          <td className="p-4">
-                            <div className="font-bold text-xs">GLAM SLAM MINI</div>
-                            <div className="text-[10px] text-zinc-400">S56WG0108PR818</div>
-                          </td>
-                          <td className="p-4 text-xs text-zinc-500">包袋 / 迷你包</td>
-                          <td className="p-4 text-right font-mono text-xs text-zinc-500">€ 1,200.00</td>
-                          <td className="p-4 text-right font-mono font-bold">
-                            <div className="border border-zinc-200 px-2 py-1 inline-block">¥ 9,450.00</div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div className="border border-zinc-200 px-4 py-1 inline-block">124</div>
-                          </td>
-                        </tr>
+                        {matchedItems.map(item => (
+                          <tr key={item.id} className="hover:bg-zinc-50">
+                            <td className="p-4">
+                              <input 
+                                type="checkbox" 
+                                className="accent-black" 
+                                checked={item.selected} 
+                                onChange={() => toggleMatchedItemSelection(item.id)}
+                              />
+                            </td>
+                            <td className="p-4">
+                              <span className="bg-black text-white text-[10px] font-bold px-2 py-1">已匹配</span>
+                            </td>
+                            <td className="p-4">
+                              {item.isTextPlaceholder ? (
+                                <div className="w-10 h-10 bg-zinc-100 p-1 flex items-center justify-center font-bold text-white bg-black">
+                                  {item.image}
+                                </div>
+                              ) : (
+                                <div className="w-10 h-10 bg-zinc-100 p-1">
+                                  <img src={item.image} className="w-full h-full object-contain mix-blend-multiply grayscale" />
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-4 font-bold">{item.brand}</td>
+                            <td className="p-4">
+                              <div className="font-bold text-xs">{item.name}</div>
+                              <div className="text-[10px] text-zinc-400">{item.code}</div>
+                            </td>
+                            <td className="p-4 text-xs text-zinc-500">{item.category}</td>
+                            <td className="p-4 text-right font-mono text-xs text-zinc-500">{item.originalPrice}</td>
+                            <td className="p-4 text-right">
+                              <div className="flex items-center justify-end gap-1 font-mono font-bold">
+                                <span>¥</span>
+                                <input 
+                                  type="number" 
+                                  value={item.price} 
+                                  onChange={(e) => handleUpdateMatchedItem(item.id, 'price', Number(e.target.value) || 0)}
+                                  className="w-24 border border-zinc-200 px-2 py-1 focus:border-black outline-none text-right placeholder-zinc-300"
+                                />
+                              </div>
+                            </td>
+                            <td className="p-4 text-center">
+                              <input 
+                                type="number" 
+                                value={item.stock} 
+                                onChange={(e) => handleUpdateMatchedItem(item.id, 'stock', Number(e.target.value) || 0)}
+                                className="w-20 border border-zinc-200 px-2 py-1 focus:border-black outline-none text-center"
+                              />
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>

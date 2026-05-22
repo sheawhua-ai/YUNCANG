@@ -9,6 +9,12 @@ export function OfferToMarketplace({ setActiveTab }: OfferToMarketplaceProps) {
   const [isManualMatchOpen, setIsManualMatchOpen] = useState(false);
   const [selectedPublicSpu, setSelectedPublicSpu] = useState<string | null>(null);
   const [matchPercentage, setMatchPercentage] = useState<number | null>(null);
+  const [isFallbackModalOpen, setIsFallbackModalOpen] = useState(false);
+  const [skuMatches, setSkuMatches] = useState<Record<string, string>>({
+    's1': 's',
+    's2': 'm'
+  });
+  const [isAutoMatching, setIsAutoMatching] = useState(false);
 
   const handleCloseManualMatch = () => {
     setIsManualMatchOpen(false);
@@ -24,6 +30,17 @@ export function OfferToMarketplace({ setActiveTab }: OfferToMarketplaceProps) {
     } else {
       setSelectedPublicSpu(null);
     }
+  };
+
+  const handleSmartMatch = () => {
+    setIsAutoMatching(true);
+    setTimeout(() => {
+      setSkuMatches({
+        's1': 's',
+        's2': 'm'
+      });
+      setIsAutoMatching(false);
+    }, 800);
   };
 
   return (
@@ -260,7 +277,18 @@ export function OfferToMarketplace({ setActiveTab }: OfferToMarketplaceProps) {
             ) : (
               <>
                 <div className="p-4 md:p-6">
-                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">SKU 映射表</div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">SKU 映射表</div>
+                    <div className="flex items-center gap-2">
+                       <span className="text-[10px] text-zinc-400 italic">当我的 SKU 多于公共库时: </span>
+                       <button 
+                         className="text-[10px] font-bold text-blue-600 hover:underline border border-blue-100 bg-blue-50/50 px-2 py-0.5"
+                         onClick={() => setIsFallbackModalOpen(true)}
+                       >
+                         配置并引入兜底匹配规则
+                       </button>
+                    </div>
+                  </div>
                   
                   <div className="flex flex-col md:flex-row gap-4 md:items-center mb-6 p-4 bg-zinc-50 border border-zinc-100">
                     <div className="flex-1 flex gap-4 items-center border-b md:border-b-0 md:border-r border-zinc-200 pb-4 md:pb-0 md:pr-4">
@@ -286,26 +314,51 @@ export function OfferToMarketplace({ setActiveTab }: OfferToMarketplaceProps) {
                   <div className="border border-zinc-200">
                     <div className="grid grid-cols-2 bg-zinc-50 border-b border-zinc-200 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                       <div className="p-3 border-r border-zinc-200">我的 SKU</div>
-                      <div className="p-3">映射到公共库 SKU</div>
+                      <div className="p-3 flex justify-between items-center">
+                        <span>映射到公共库 SKU</span>
+                        <button 
+                          onClick={handleSmartMatch}
+                          disabled={isAutoMatching}
+                          className="bg-black text-white text-[10px] px-2 py-1 hover:bg-zinc-800 transition-colors disabled:bg-zinc-300"
+                        >
+                          {isAutoMatching ? '计算中...' : '智能自动匹配'}
+                        </button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 border-b border-zinc-100 items-center">
-                      <div className="p-3 border-r border-zinc-200 text-sm font-bold">S码 / 黑色</div>
+                      <div className="p-3 border-r border-zinc-200 text-sm font-bold flex items-center justify-between">
+                        <span>S码 / 黑色</span>
+                        <span className="text-[9px] bg-zinc-100 text-zinc-400 px-1">BAR: 3145891...</span>
+                      </div>
                       <div className="p-3">
-                        <select className="w-full border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-0 outline-none bg-white cursor-pointer">
+                        <select 
+                          value={skuMatches['s1'] || ''}
+                          onChange={(e) => setSkuMatches({...skuMatches, 's1': e.target.value})}
+                          className="w-full border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-0 outline-none bg-white cursor-pointer"
+                        >
                           <option value="">请选择匹配的 SKU...</option>
-                          <option value="s" selected>S码 / 黑色</option>
+                          <option value="fallback" className="text-blue-600 font-bold">公共库兜底规格 (Fallback)</option>
+                          <option value="s">S码 / 黑色</option>
                           <option value="m">M码 / 黑色</option>
                           <option value="l">L码 / 黑色</option>
                         </select>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 items-center">
-                      <div className="p-3 border-r border-zinc-200 text-sm font-bold">M码 / 黑色</div>
+                      <div className="p-3 border-r border-zinc-200 text-sm font-bold flex items-center justify-between">
+                        <span>M码 / 黑色</span>
+                        <span className="text-[9px] bg-zinc-100 text-zinc-400 px-1">BAR: 3145891...</span>
+                      </div>
                       <div className="p-3">
-                        <select className="w-full border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-0 outline-none bg-white cursor-pointer">
+                        <select 
+                          value={skuMatches['s2'] || ''}
+                          onChange={(e) => setSkuMatches({...skuMatches, 's2': e.target.value})}
+                          className="w-full border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-0 outline-none bg-white cursor-pointer"
+                        >
                           <option value="">请选择匹配的 SKU...</option>
+                          <option value="fallback" className="text-blue-600 font-bold">公共库兜底规格 (Fallback)</option>
                           <option value="s">S码 / 黑色</option>
-                          <option value="m" selected>M码 / 黑色</option>
+                          <option value="m">M码 / 黑色</option>
                           <option value="l">L码 / 黑色</option>
                         </select>
                       </div>
@@ -323,6 +376,60 @@ export function OfferToMarketplace({ setActiveTab }: OfferToMarketplaceProps) {
           </div>
         </div>
       )}
+      <FallbackRulesModal isOpen={isFallbackModalOpen} onClose={() => setIsFallbackModalOpen(false)} />
+    </div>
+  );
+}
+
+function FallbackRulesModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [selectedRule, setSelectedRule] = useState('one_to_many');
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative bg-white w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50">
+          <h2 className="text-sm font-black uppercase tracking-widest">公共库兜底匹配规则配置</h2>
+          <button onClick={onClose} className="text-zinc-400 hover:text-black transition-colors"><X size={20} /></button>
+        </div>
+        
+        <div className="p-6">
+          <p className="text-xs text-zinc-500 mb-6">当商家 SKU 数量与公共库 SKU 不一致时，系统将根据以下规则自动填充缺口，减少人工操作工作量。</p>
+          
+          <div className="space-y-4">
+            <label className={`block p-4 border transition-all cursor-pointer ${selectedRule === 'one_to_many' ? 'border-black bg-zinc-50' : 'border-zinc-100 hover:border-zinc-200'}`}>
+              <div className="flex items-center gap-3">
+                <input type="radio" checked={selectedRule === 'one_to_many'} onChange={() => setSelectedRule('one_to_many')} className="accent-black" />
+                <div className="font-bold text-sm">一对多自动派发 (One to Many)</div>
+              </div>
+              <div className="text-[10px] text-zinc-400 mt-2 ml-7">若公共库只有均码，所有商家 SKU 自动映射到该均码。</div>
+            </label>
+
+            <label className={`block p-4 border transition-all cursor-pointer ${selectedRule === 'keyword_match' ? 'border-black bg-zinc-50' : 'border-zinc-100 hover:border-zinc-200'}`}>
+              <div className="flex items-center gap-3">
+                <input type="radio" checked={selectedRule === 'keyword_match'} onChange={() => setSelectedRule('keyword_match')} className="accent-black" />
+                <div className="font-bold text-sm">关键字模糊映射 (Fuzzy Keyword)</div>
+              </div>
+              <div className="text-[10px] text-zinc-400 mt-2 ml-7">根据 S/M/L, 36/37/38 等尺码关键字自动进行拓扑匹配。</div>
+            </label>
+
+            <label className={`block p-4 border transition-all cursor-pointer ${selectedRule === 'fallback_placeholder' ? 'border-black bg-zinc-50' : 'border-zinc-100 hover:border-zinc-200'}`}>
+              <div className="flex items-center gap-3">
+                <input type="radio" checked={selectedRule === 'fallback_placeholder'} onChange={() => setSelectedRule('keyword_match')} className="accent-black" />
+                <div className="font-bold text-sm">创建兜底规格占位符</div>
+              </div>
+              <div className="text-[10px] text-zinc-400 mt-2 ml-7">对于无法匹配的溢出 SKU，自动映射到「公共库默认兜底」规格。</div>
+            </label>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-zinc-100 flex justify-end gap-3">
+            <button onClick={onClose} className="px-6 py-2 text-xs font-bold border border-zinc-200 hover:bg-zinc-50 transition-colors">取消</button>
+            <button onClick={() => { alert('规则已应用，正在执行预匹配...'); onClose(); }} className="px-6 py-2 bg-black text-white text-xs font-bold hover:bg-zinc-800 transition-colors">应用规则并重算匹配</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

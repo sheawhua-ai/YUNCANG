@@ -46,6 +46,7 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, onClose }: SidebarPro
       items: [
         { id: 'manifest_campaign', label: '货单管理' },
         { id: 'manifest_order', label: '货单订单' },
+        { id: 'manifest_confirmation', label: '确认单管理' },
       ]
     },
     {
@@ -54,7 +55,7 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, onClose }: SidebarPro
       icon: Settings,
       items: [
         { id: 'warehouse', label: '仓库管理' },
-        { id: 'finance', label: '财务管理' },
+        { id: 'finance', label: '财务审核' },
       ]
     }
   ];

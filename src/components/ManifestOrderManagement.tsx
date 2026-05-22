@@ -1,5 +1,6 @@
-import { Search, ChevronRight, X, FileText, CheckCircle } from "lucide-react";
+import { Search, ChevronRight, X, FileText, CheckCircle, Plus, Printer, HelpCircle, Upload, FileDown } from "lucide-react";
 import { useState } from "react";
+import { CreateOrderModal } from "./CreateOrderModal";
 
 const INITIAL_ORDERS = [
   {
@@ -11,7 +12,8 @@ const INITIAL_ORDERS = [
       { id: 'item-1', name: 'Hermès Birkin 25', sku: 'H-B25-GOLD', count: 1, price: 156000, status: 'pending_deposit', statusLabel: '待付定金' },
       { id: 'item-2', name: 'Hermès Twilly', sku: 'H-TW-SILK', count: 2, price: 25000, status: 'pending_deposit', statusLabel: '待付定金' }
     ],
-    progress: []
+    progress: [],
+    shippingFee: 150
   },
   {
     id: 'MAN-2024-0814-B1', type: 'manifest', date: '2024-08-14 14:20', brand: 'Louis Vuitton', productName: 'LV Neverfull 等多件', spuCount: 2, itemCount: 2,
@@ -19,12 +21,13 @@ const INITIAL_ORDERS = [
     totalPrice: 26500, depositAmount: 7950, finalAmount: 18550, status: 'pending_confirmation', statusLabel: '待确认',
     image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=100&q=80',
     items: [
-      { id: 'item-3', name: 'LV Neverfull', sku: 'LV-NF-MM', count: 1, price: 14500, status: 'pending_confirmation', statusLabel: '待确认' },
-      { id: 'item-4', name: 'LV Speedy 20', sku: 'LV-SP20-BR', count: 1, price: 12000, status: 'pending_confirmation', statusLabel: '待确认' }
+      { id: 'item-3', name: 'LV Neverfull', sku: 'LV-NF-MM', itemNo: 'LV00291', count: 1, price: 14500, status: 'pending_confirmation', statusLabel: '待确认' },
+      { id: 'item-4', name: 'LV Speedy 20', sku: 'LV-SP20-BR', itemNo: 'LV00882', count: 1, price: 12000, status: 'pending_confirmation', statusLabel: '待确认' }
     ],
     progress: [
       { id: 'p1', time: '2024-08-14 15:00', description: '定金确认', items: '全部 (2件)', amountChange: '+¥7,950' }
-    ]
+    ],
+    shippingFee: 80
   },
   {
     id: 'MAN-2024-0813-C1', type: 'manifest', date: '2024-08-13 09:15', brand: 'Chanel', productName: 'Chanel CF', spuCount: 1, itemCount: 1,
@@ -110,6 +113,8 @@ export function ManifestOrderManagement() {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
+  
+  const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
   
   const [newProgressDesc, setNewProgressDesc] = useState('');
   const [newProgressAmount, setNewProgressAmount] = useState('');
@@ -345,9 +350,16 @@ export function ManifestOrderManagement() {
         <div className="flex flex-col md:flex-row justify-between md:items-end mb-6 md:mb-8 gap-4">
           <div>
             <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">Manifest Orders</div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase mb-2">货单订单管理</h1>
-            <p className="text-xs md:text-sm text-zinc-500">管理货单业务订单，支持手工确认银行转账付款</p>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase mb-2">PC 货单订单管理</h1>
+            <p className="text-xs md:text-sm text-zinc-500">支持 PC 后端代下单（定金付款）、Excel 批量回传确认订单</p>
           </div>
+          <button 
+            onClick={() => setIsNewOrderOpen(true)}
+            className="bg-black text-white px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors flex items-center gap-2"
+          >
+            <Plus size={16} />
+            后台帮客户下单
+          </button>
         </div>
 
         <div className="flex gap-4 md:gap-8 border-b border-zinc-200 mb-6 overflow-x-auto no-scrollbar whitespace-nowrap">
@@ -406,7 +418,7 @@ export function ManifestOrderManagement() {
             </div>
             <div className="col-span-2">买家</div>
             <div className="col-span-2">配送方式 / 仓库</div>
-            <div className="col-span-2 text-right">总价</div>
+            <div className="col-span-2 text-right">运费 / 总价</div>
             <div className="col-span-2 pl-4">状态</div>
             <div className="col-span-1 text-right">操作</div>
           </div>
@@ -446,6 +458,7 @@ export function ManifestOrderManagement() {
                 <div className="flex justify-between md:contents">
                   <div className="text-xs text-zinc-500 md:hidden ml-16 md:ml-0 md:pl-0">总价</div>
                   <div className="md:col-span-2 text-right">
+                    <div className="text-[10px] text-zinc-400">运费: ¥{(order as any).shippingFee || 0}</div>
                     <div className="text-sm font-bold mb-1">¥ {order.totalPrice.toLocaleString()}</div>
                   </div>
                 </div>
@@ -494,7 +507,16 @@ export function ManifestOrderManagement() {
             <div className="flex items-center justify-between px-4 md:px-8 py-4 md:py-6 border-b border-zinc-100 bg-zinc-50">
               <div>
                 <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">订单详情</div>
-                <h2 className="text-lg md:text-xl font-black uppercase tracking-tight">{selectedOrderData.id}</h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg md:text-xl font-black uppercase tracking-tight">{selectedOrderData.id}</h2>
+                  <button 
+                    onClick={() => alert('正在生成 PDF 发票并预览...')}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-white border border-zinc-200 text-black rounded-sm hover:border-black transition-colors"
+                  >
+                    <Printer size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">发票模版 (PDF)</span>
+                  </button>
+                </div>
               </div>
               <button onClick={() => setSelectedOrder(null)} className="text-zinc-400 hover:text-black transition-colors"><X size={24} /></button>
             </div>
@@ -641,7 +663,10 @@ export function ManifestOrderManagement() {
                           )}
                           <td className="p-4">
                             <div className="font-bold text-xs">{item.name}</div>
-                            <div className="text-[10px] text-zinc-400">SKU: {item.sku}</div>
+                            <div className="flex gap-2 mt-1">
+                              <span className="text-[9px] bg-zinc-100 px-1 font-bold text-zinc-400 italic">No: {item.itemNo || 'N/A'}</span>
+                              <span className="text-[9px] text-zinc-400">SKU: {item.sku}</span>
+                            </div>
                           </td>
                           <td className="p-4 text-right font-mono">{item.count}</td>
                           <td className="p-4 text-right font-mono">¥ {item.price.toLocaleString()}</td>
@@ -872,6 +897,15 @@ export function ManifestOrderManagement() {
           </div>
         </div>
       )}
+
+      <CreateOrderModal 
+        isOpen={isNewOrderOpen} 
+        onClose={() => setIsNewOrderOpen(false)} 
+        onFinish={(newOrder) => {
+          setOrders([newOrder, ...orders]);
+          alert('后台订单已成功生成，通知财务查账并进行待付定金确认。');
+        }}
+      />
     </div>
   );
 }
