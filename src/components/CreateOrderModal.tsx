@@ -15,10 +15,21 @@ interface CartItem {
 export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolean; onClose: () => void; onFinish: (order: any) => void }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerSuggestions, setCustomerSuggestions] = useState<{ name: string; phone: string; address: string }[]>([]);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [customerInfo, setCustomerInfo] = useState<{ name: string; phone: string; address: string } | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [depositAmount, setDepositAmount] = useState<number>(0);
   const [shippingManual, setShippingManual] = useState<number | null>(null);
+  const [selectedShippingRule, setSelectedShippingRule] = useState<string>('auto');
+
+  // 模拟客户库
+  const MOCK_CUSTOMERS = [
+    { name: '张三', phone: '13800138000', address: '上海市浦东新区陆家嘴金融中心' },
+    { name: '李四', phone: '13912345678', address: '北京市朝阳区国贸商圈' },
+    { name: '王五', phone: '13788889999', address: '广州市天河区珠江新城' },
+    { name: '赵六', phone: '13666667777', address: '深圳市南山区科技园' }
+  ];
 
   // 运费模板按类目分
   const shippingTemplate = {
@@ -26,6 +37,24 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
     clothes: 30,
     bags: 80,
     other: 40
+  };
+
+  const handleCustomerPhoneChange = (val: string) => {
+    setCustomerPhone(val);
+    if (val.length > 0) {
+      const filtered = MOCK_CUSTOMERS.filter(c => c.phone.includes(val) || c.name.includes(val));
+      setCustomerSuggestions(filtered);
+      setShowCustomerDropdown(true);
+    } else {
+      setCustomerSuggestions([]);
+      setShowCustomerDropdown(false);
+    }
+  };
+
+  const selectCustomer = (customer: any) => {
+    setCustomerInfo(customer);
+    setCustomerPhone(customer.phone);
+    setShowCustomerDropdown(false);
   };
 
   const calculateAutoShipping = () => {
@@ -91,40 +120,82 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                   <input 
                     type="text" 
-                    placeholder="输入客户手机号进行匹配..." 
+                    placeholder="输入手机号或客户名称匹配..." 
                     className="w-full pl-10 pr-4 py-3 bg-zinc-50 border border-zinc-200 focus:border-black outline-none font-bold"
                     value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    onBlur={searchCustomer}
+                    onChange={(e) => handleCustomerPhoneChange(e.target.value)}
                   />
+                  
+                  {/* Customer Suggestions Dropdown */}
+                  {showCustomerDropdown && (
+                    <div className="absolute top-full left-0 right-0 z-[110] bg-white border border-zinc-200 mt-1 shadow-xl max-h-60 overflow-y-auto">
+                      {customerSuggestions.length > 0 ? (
+                        customerSuggestions.map((c, i) => (
+                          <div 
+                            key={i} 
+                            onClick={() => selectCustomer(c)}
+                            className="p-3 hover:bg-zinc-50 cursor-pointer border-b border-zinc-100 last:border-0"
+                          >
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-black text-sm">{c.name}</span>
+                              <span className="text-xs font-mono text-zinc-400">{c.phone}</span>
+                            </div>
+                            <div className="text-[10px] text-zinc-500 truncate">{c.address}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center">
+                          <p className="text-xs text-zinc-400 italic">未找到匹配客户</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <button 
-                  className="bg-white border border-zinc-200 px-6 py-2 text-xs font-bold uppercase hover:border-black flex items-center gap-2"
-                  onClick={() => alert('Excel 导入客户订单功能：请上传确认过的 Excel')}
-                >
-                  <Upload size={16} />
-                  Excel 导入
-                </button>
+                
+                {customerPhone.length > 0 && customerSuggestions.length === 0 && (
+                   <button 
+                     onClick={() => alert('立即创建新客户')}
+                     className="bg-black text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 flex items-center gap-2"
+                   >
+                     <Plus size={16} />
+                     新建客户
+                   </button>
+                )}
               </div>
 
               {customerInfo && (
-                <div className="p-4 bg-black text-white rounded-sm mb-4">
+                <div className="p-4 bg-black text-white rounded-sm mb-4 relative group">
                   <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-2">已匹配客户</div>
                   <div className="flex justify-between">
                     <span className="font-bold">{customerInfo.name}</span>
                     <span className="font-mono">{customerInfo.phone}</span>
                   </div>
                   <div className="text-xs mt-1 opacity-80">{customerInfo.address}</div>
+                  <button 
+                    onClick={() => {setCustomerInfo(null); setCustomerPhone('');}}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-white"
+                  >
+                    <X size={14} />
+                  </button>
                 </div>
               )}
 
-              <div className="relative">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                 <input 
-                   type="text" 
-                   placeholder="搜索商品名称、货号 SPU/SKU..." 
-                   className="w-full pl-10 pr-4 py-2 bg-white border border-zinc-200 focus:border-black outline-none text-sm"
-                 />
+              <div className="flex gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                  <input 
+                    type="text" 
+                    placeholder="搜索商品名称、货号 SPU/SKU..." 
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-zinc-200 focus:border-black outline-none text-sm"
+                  />
+                </div>
+                <button 
+                  onClick={() => alert('批量上传 Excel 商品清单进行下单')}
+                  className="bg-zinc-100 text-zinc-600 px-4 py-2 text-xs font-bold uppercase flex items-center gap-2 hover:bg-zinc-200 transition-colors"
+                >
+                  <Upload size={14} />
+                  Excel 批量导入货单
+                </button>
               </div>
             </div>
 
@@ -210,22 +281,54 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest text-[10px]">运费设置 (多类目汇总)</span>
-                  <span className="text-[10px] text-zinc-400 italic">模板合计: ¥{calculateAutoShipping()}</span>
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest text-[10px]">运费设置</span>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => {setSelectedShippingRule('auto'); setShippingManual(null);}}
+                      className={`text-[9px] font-bold px-2 py-1 border ${selectedShippingRule === 'auto' ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-zinc-500'}`}
+                    >
+                      按类目规则
+                    </button>
+                    <button 
+                      onClick={() => setSelectedShippingRule('manual')}
+                      className={`text-[9px] font-bold px-2 py-1 border ${selectedShippingRule === 'manual' ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-zinc-500'}`}
+                    >
+                      手动输入
+                    </button>
+                  </div>
                 </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">{shippingManual !== null ? '手动运费: ¥' : '自动运费: ¥'}</span>
-                  <input 
-                    type="number" 
-                    value={totalShipping} 
-                    onChange={(e) => setShippingManual(Number(e.target.value))}
-                    placeholder="留空则按分类件数自动计算"
-                    className="w-full pl-24 pr-4 py-2 border border-zinc-200 focus:border-black outline-none font-mono text-sm" 
-                  />
-                  {shippingManual !== null && (
-                    <button onClick={() => setShippingManual(null)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-blue-600 hover:underline">重置为模板</button>
-                  )}
-                </div>
+
+                {selectedShippingRule === 'auto' ? (
+                  <div className="p-3 bg-white border border-zinc-200">
+                    <div className="text-[10px] text-zinc-400 mb-2 uppercase tracking-widest font-bold">已匹配运费规则</div>
+                    <div className="space-y-1">
+                      {Array.from(new Set(cart.map(i => i.category))).map(cat => {
+                        const count = cart.filter(i => i.category === cat).reduce((s, i) => s + i.count, 0);
+                        return (
+                          <div key={cat} className="flex justify-between text-[10px] font-mono">
+                            <span className="text-zinc-500">{cat === 'shoes' ? '鞋类' : cat === 'clothes' ? '衣物' : cat === 'bags' ? '箱包' : '其他'} (x{count})</span>
+                            <span className="font-bold">¥{(shippingTemplate[cat as keyof typeof shippingTemplate] || 0) * count}</span>
+                          </div>
+                        );
+                      })}
+                      <div className="pt-2 mt-2 border-t border-zinc-100 flex justify-between font-bold text-xs">
+                        <span>规则合计</span>
+                        <span>¥{calculateAutoShipping()}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">手动运费: ¥</span>
+                    <input 
+                      type="number" 
+                      value={shippingManual || ''} 
+                      onChange={(e) => setShippingManual(Number(e.target.value))}
+                      placeholder="输入协商后的金额..."
+                      className="w-full pl-24 pr-4 py-2 border border-zinc-200 focus:border-black outline-none font-mono text-sm" 
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="pt-6 border-t border-zinc-200 space-y-2">
