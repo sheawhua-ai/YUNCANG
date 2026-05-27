@@ -39,6 +39,9 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
     other: 40
   };
 
+  const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
+  const [newCustomerForm, setNewCustomerForm] = useState({ phone: '', name: '' });
+
   const handleCustomerPhoneChange = (val: string) => {
     setCustomerPhone(val);
     if (val.length > 0) {
@@ -55,6 +58,18 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
     setCustomerInfo(customer);
     setCustomerPhone(customer.phone);
     setShowCustomerDropdown(false);
+  };
+
+  const handleCreateNewCustomer = () => {
+    const newCustomer = {
+      name: newCustomerForm.name || '新客户',
+      phone: newCustomerForm.phone,
+      address: '后台手动创建 (暂未录入地址)'
+    };
+    setCustomerInfo(newCustomer);
+    setCustomerPhone(newCustomer.phone);
+    setIsNewCustomerModalOpen(false);
+    setNewCustomerForm({ phone: '', name: '' });
   };
 
   const calculateAutoShipping = () => {
@@ -154,7 +169,10 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
                 
                 {customerPhone.length > 0 && customerSuggestions.length === 0 && (
                    <button 
-                     onClick={() => alert('立即创建新客户')}
+                     onClick={() => {
+                       setNewCustomerForm({ ...newCustomerForm, phone: customerPhone });
+                       setIsNewCustomerModalOpen(true);
+                     }}
                      className="bg-black text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 flex items-center gap-2"
                    >
                      <Plus size={16} />
@@ -360,6 +378,56 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
           </div>
         </div>
       </div>
+      {/* 新建客户子弹窗 */}
+      {isNewCustomerModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={() => setIsNewCustomerModalOpen(false)}></div>
+          <div className="relative bg-white w-full max-w-sm shadow-2xl rounded-sm animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50">
+              <h3 className="text-xs font-black uppercase tracking-widest">录入新客户信息</h3>
+              <button onClick={() => setIsNewCustomerModalOpen(false)} className="text-zinc-400 hover:text-black">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">客户手机号</label>
+                <input 
+                  type="text" 
+                  value={newCustomerForm.phone}
+                  onChange={(e) => setNewCustomerForm({ ...newCustomerForm, phone: e.target.value })}
+                  placeholder="请输入手机号..."
+                  className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 focus:border-black outline-none font-mono text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">备注姓名 / 昵称</label>
+                <input 
+                  type="text" 
+                  value={newCustomerForm.name}
+                  onChange={(e) => setNewCustomerForm({ ...newCustomerForm, name: e.target.value })}
+                  placeholder="例如：张三 (VIP)..."
+                  className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 focus:border-black outline-none text-sm font-bold"
+                />
+              </div>
+              <div className="pt-4 flex gap-2">
+                <button 
+                  onClick={() => setIsNewCustomerModalOpen(false)}
+                  className="flex-1 py-2 text-xs font-bold border border-zinc-200 hover:bg-zinc-50"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={handleCreateNewCustomer}
+                  className="flex-1 py-2 bg-black text-white text-xs font-bold hover:bg-zinc-800"
+                >
+                  确认并导入
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -54,7 +54,7 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, onClose }: SidebarPro
       label: '基础设施',
       icon: Settings,
       items: [
-        { id: 'warehouse', label: '仓库管理' },
+        { id: 'warehouse', label: '仓库及运费' },
         { id: 'finance', label: '财务审核' },
       ]
     }
