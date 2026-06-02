@@ -189,6 +189,12 @@ export function OrderManagement() {
   const [isEditingPrice, setIsEditingPrice] = useState(false);
   const [tempPrice, setTempPrice] = useState('');
 
+  const getCurrencySymbol = (warehouseName?: string) => {
+    if (warehouseName?.includes('香港')) return 'HK$';
+    if (warehouseName?.includes('欧洲') || warehouseName?.includes('Europe')) return '€';
+    return '¥';
+  };
+
   const handleUpdatePrice = () => {
     if (!selectedOrder) return;
     const newPrice = parseFloat(tempPrice);
@@ -740,13 +746,27 @@ export function OrderManagement() {
                 </div>
                 <div className="flex justify-between items-center md:contents border-t border-zinc-100 pt-3 md:border-none md:pt-0">
                   <div className="md:col-span-2 md:text-right">
-                    <div className="text-xs text-zinc-500 md:hidden mb-1">总价</div>
-                    <div className="text-sm font-bold mb-1">¥ {order.totalPrice.toLocaleString()}</div>
-                    {order.depositPaid ? (
-                      <div className="text-[9px] text-orange-600 font-bold">已付定金: ¥{order.depositPaid.toLocaleString()}</div>
-                    ) : (
-                      <div className="text-[9px] text-zinc-400">{order.status === 'pending_payment' ? '未付款' : ''}</div>
-                    )}
+                    <div className="text-xs text-zinc-500 md:hidden mb-1">价格详情</div>
+                    <div className="flex flex-col md:items-end">
+                      <div className="text-sm font-bold">{getCurrencySymbol(order.warehouse)} {order.totalPrice.toLocaleString()}</div>
+                      <div className="text-[9px] text-zinc-400 mb-1">订单总价</div>
+                      
+                      {order.depositPaid ? (
+                        <div className="flex flex-col md:items-end">
+                          <div className="text-[9px] text-orange-600 font-bold leading-none">已付定金: {getCurrencySymbol(order.warehouse)}{order.depositPaid.toLocaleString()}</div>
+                          <div className="text-[9px] text-green-600 font-bold mt-1 leading-none">
+                            已确认品额: {getCurrencySymbol(order.warehouse)}{(order.items as any[]).filter(i => i.status !== 'pending_confirmation' && i.status !== 'pending_payment').reduce((s, i) => s + i.price * i.count, 0).toLocaleString()}
+                          </div>
+                          <div className="text-[9px] text-red-600 font-bold mt-1 leading-none">
+                            待收尾款: {getCurrencySymbol(order.warehouse)}{(order.totalPrice - (order.depositPaid || 0)).toLocaleString()}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[9px] text-zinc-400">{order.status === 'pending_payment' ? '未付款' : ''}</div>
+                      )}
+                      
+                      <div className="text-[9px] text-zinc-400 mt-1">运费: {getCurrencySymbol(order.warehouse)}0</div>
+                    </div>
                   </div>
                   <div className="md:col-span-2 md:pl-4 text-right md:text-left">
                     <div className={`text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block md:mb-1 ${
@@ -973,24 +993,34 @@ export function OrderManagement() {
             <div className="bg-zinc-50 p-6 border border-zinc-200 mb-8">
               <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">支付与结算</h3>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm">订单总额</span>
-                <span className="text-sm font-bold">¥ {selectedOrderData.totalPrice.toLocaleString()}.00</span>
+                <span className="text-sm text-zinc-500">订单总额</span>
+                <span className="text-sm font-black">{getCurrencySymbol(selectedOrderData.warehouse)} {selectedOrderData.totalPrice.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-zinc-500">已确认商品金额</span>
+                <span className="text-sm font-bold text-green-600">
+                  {getCurrencySymbol(selectedOrderData.warehouse)} {(selectedOrderData.items as any[]).filter(i => i.status !== 'pending_confirmation' && i.status !== 'pending_payment').reduce((s, i) => s + i.price * i.count, 0).toLocaleString()}
+                </span>
               </div>
               {selectedOrderData.depositPaid ? (
                 <>
                   <div className="flex justify-between items-center mb-2 text-orange-600">
-                    <span className="text-sm">已付定金 (30%)</span>
-                    <span className="text-sm font-bold">¥ {selectedOrderData.depositPaid.toLocaleString()}.00</span>
+                    <span className="text-sm">已付定金</span>
+                    <span className="text-sm font-bold">{getCurrencySymbol(selectedOrderData.warehouse)} {selectedOrderData.depositPaid.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-zinc-200 mt-2">
-                    <span className="text-sm font-bold">待付尾款</span>
-                    <span className="text-lg font-black">¥ {(selectedOrderData.totalPrice - selectedOrderData.depositPaid).toLocaleString()}.00</span>
+                    <span className="text-sm text-zinc-500">已确认总额</span>
+                    <span className="text-sm font-black">{getCurrencySymbol(selectedOrderData.warehouse)} {((selectedOrderData.items as any[]).filter(i => i.status !== 'pending_confirmation' && i.status !== 'pending_payment').reduce((s, i) => s + i.price * i.count, 0)).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-sm font-bold text-zinc-800">待付尾款金额</span>
+                    <span className="text-lg font-black text-red-600">{getCurrencySymbol(selectedOrderData.warehouse)} {(selectedOrderData.totalPrice - selectedOrderData.depositPaid).toLocaleString()}</span>
                   </div>
                 </>
               ) : (
                 <div className="flex justify-between items-center pt-2 border-t border-zinc-200 mt-2">
                   <span className="text-sm font-bold">已付金额</span>
-                  <span className="text-lg font-black">¥ {selectedOrderData.status === 'pending_payment' ? '0.00' : `${selectedOrderData.totalPrice.toLocaleString()}.00`}</span>
+                  <span className="text-lg font-black">{getCurrencySymbol(selectedOrderData.warehouse)} {selectedOrderData.status === 'pending_payment' ? '0.00' : `${selectedOrderData.totalPrice.toLocaleString()}`}</span>
                 </div>
               )}
 
@@ -1119,7 +1149,7 @@ export function OrderManagement() {
                             <div className="text-[10px] text-zinc-400">SKU条码: {item.sku}</div>
                           </td>
                           <td className="p-4 text-right font-mono">{item.count}</td>
-                          <td className="p-4 text-right font-mono">¥ {item.price.toLocaleString()}</td>
+                          <td className="p-4 text-right font-mono">{getCurrencySymbol(selectedOrderData.warehouse)} {item.price.toLocaleString()}</td>
                           <td className="p-4 text-center"><span className={`${item.status === 'refunded' ? 'text-red-600' : 'text-orange-600'} text-xs font-bold`}>{item.statusLabel}</span></td>
                         </tr>
                       ))}
@@ -1173,7 +1203,7 @@ export function OrderManagement() {
                         <div className="text-[10px] text-zinc-400 mb-2">SKU条码: {item.sku}</div>
                         <div className="flex justify-between items-end mt-auto pt-2 border-t border-zinc-100">
                           <div className="text-[10px] text-zinc-500">数量: <span className="font-mono text-black font-bold">{item.count}</span></div>
-                          <div className="font-mono font-bold text-sm">¥ {item.price.toLocaleString()}</div>
+                          <div className="font-mono font-bold text-sm">{getCurrencySymbol(selectedOrderData.warehouse)} {item.price.toLocaleString()}</div>
                         </div>
                       </div>
                     </div>

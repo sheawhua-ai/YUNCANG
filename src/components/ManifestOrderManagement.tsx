@@ -456,10 +456,32 @@ export function ManifestOrderManagement() {
                   </div>
                 </div>
                 <div className="flex justify-between md:contents">
-                  <div className="text-xs text-zinc-500 md:hidden ml-16 md:ml-0 md:pl-0">总价</div>
+                  <div className="text-xs text-zinc-500 md:hidden ml-16 md:ml-0 md:pl-0">核销详情 / 总价</div>
                   <div className="md:col-span-2 text-right">
-                    <div className="text-[10px] text-zinc-400">运费: ¥{(order as any).shippingFee || 0}</div>
-                    <div className="text-sm font-bold mb-1">¥ {order.totalPrice.toLocaleString()}</div>
+                    {order.status === 'pending_deposit' && (
+                      <div className="flex flex-col items-end">
+                        <div className="text-sm font-black mb-0.5 text-zinc-900 leading-none">¥ {order.totalPrice.toLocaleString()}</div>
+                        <div className="text-[10px] text-zinc-400 mb-1">总价</div>
+                        <div className="text-sm font-black text-orange-600 leading-none">¥ {order.depositAmount.toLocaleString()}</div>
+                        <div className="text-[10px] text-orange-400 mb-1">待付定金</div>
+                        <div className="text-[10px] text-zinc-400 mt-1">运费: ¥{(order as any).shippingFee || 0}</div>
+                      </div>
+                    )}
+                    {order.status === 'pending_final_payment' && (
+                      <div className="flex flex-col items-end">
+                        <div className="text-xs font-bold text-green-600 leading-none">¥ {order.items.filter(i => i.status === 'confirmed').reduce((sum, i) => sum + (i.price * i.count), 0).toLocaleString()}</div>
+                        <div className="text-[10px] text-zinc-400 mb-1">已确认金额</div>
+                        <div className="text-sm font-black text-red-600 leading-none">¥ {order.finalAmount.toLocaleString()}</div>
+                        <div className="text-[10px] text-red-400 mb-1">待付尾款</div>
+                        <div className="text-[10px] text-zinc-400 mt-1">运费: ¥{(order as any).shippingFee || 0}</div>
+                      </div>
+                    )}
+                    {order.status !== 'pending_deposit' && order.status !== 'pending_final_payment' && (
+                      <>
+                        <div className="text-sm font-bold mb-0.5">¥ {order.totalPrice.toLocaleString()}</div>
+                        <div className="text-[10px] text-zinc-400">运费: ¥{(order as any).shippingFee || 0}</div>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-between md:contents">
@@ -532,6 +554,12 @@ export function ManifestOrderManagement() {
                 <span className="text-sm text-zinc-500">需付定金 (30%)</span>
                 <span className="text-sm font-bold text-zinc-500">¥ {selectedOrderData.depositAmount.toLocaleString()}.00</span>
               </div>
+              {selectedOrderData.status === 'pending_final_payment' && (
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-zinc-500">已确认商品金额</span>
+                  <span className="text-sm font-bold text-green-600">¥ {selectedOrderData.items.filter((i: any) => i.status === 'confirmed').reduce((sum: number, i: any) => sum + (i.price * i.count), 0).toLocaleString()}.00</span>
+                </div>
+              )}
               <div className="flex justify-between items-center mb-4">
                 <span className="text-sm text-zinc-500">需付尾款 (根据确认情况计算)</span>
                 <span className="text-sm font-bold text-zinc-500">¥ {selectedOrderData.finalAmount.toLocaleString()}.00</span>

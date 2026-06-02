@@ -28,6 +28,12 @@ export function ProductManagement() {
     { value: 'hz', label: '杭州国内仓' }
   ];
 
+  const getCurrencySymbol = (warehouseName?: string) => {
+    if (warehouseName?.includes('香港')) return 'HK$';
+    if (warehouseName?.includes('欧') || warehouseName?.includes('Europe') || warehouseName?.includes('伦敦')) return '€';
+    return '¥';
+  };
+
   return (
     <div className="max-w-7xl mx-auto pb-24 md:pb-0">
       <div className="flex flex-col md:flex-row justify-between md:items-end mb-6 md:mb-8 gap-4">
@@ -198,11 +204,11 @@ export function ProductManagement() {
                 <div className="md:hidden flex flex-col gap-2 mt-2 bg-zinc-50 p-3 rounded-sm border border-zinc-100 mx-2 md:mx-0">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-zinc-500">品牌原价</span>
-                    <span className="text-sm font-bold text-zinc-400">HK$85,000</span>
+                    <span className="text-sm font-bold text-zinc-400">{getCurrencySymbol('香港')}85,000</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-zinc-500">零售价</span>
-                    <span className="text-sm font-bold text-black">HK$95,000</span>
+                    <span className="text-sm font-bold text-black">{getCurrencySymbol('香港')}95,000</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-zinc-500">零售库存</span>
@@ -210,7 +216,7 @@ export function ProductManagement() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-zinc-500">供货价</span>
-                    <span className="text-sm font-bold text-black">HK$82,000</span>
+                    <span className="text-sm font-bold text-black">{getCurrencySymbol('香港')}82,000</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-zinc-500">供货库存</span>
@@ -225,16 +231,16 @@ export function ProductManagement() {
                   </div>
                 </div>
 
-                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-400">HK$85,000</div>
+                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-400">{getCurrencySymbol('香港')}85,000</div>
                 <div className="hidden md:flex col-span-2 flex-col items-center justify-center gap-1">
                   <div className="text-xs font-bold">40mm, 41mm</div>
                   <div className="text-[10px] text-zinc-500">香港直邮仓</div>
                 </div>
-                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">HK$95,000</div>
+                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">{getCurrencySymbol('香港')}95,000</div>
                 <div className="hidden md:block col-span-1 text-center font-black text-lg">
                   15
                 </div>
-                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">HK$82,000</div>
+                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">{getCurrencySymbol('香港')}82,000</div>
                 <div className="hidden md:block col-span-1 text-center font-black text-lg text-blue-600">
                   10
                 </div>
@@ -355,11 +361,11 @@ export function ProductManagement() {
               <div className="md:hidden flex flex-col gap-2 mt-2 bg-zinc-50 p-3 rounded-sm border border-zinc-100 mx-2 md:mx-0 ml-8 md:ml-0">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-500">品牌原价</span>
-                  <span className="text-sm font-bold text-zinc-400">HK$15,000</span>
+                  <span className="text-sm font-bold text-zinc-400">{getCurrencySymbol('香港')}15,000</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-500">零售价</span>
-                  <span className="text-sm font-bold text-black">HK$16,500</span>
+                  <span className="text-sm font-bold text-black">{getCurrencySymbol('香港')}16,500</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-500">零售库存</span>
@@ -367,7 +373,7 @@ export function ProductManagement() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-500">供货价</span>
-                  <span className="text-sm font-bold text-black">HK$13,500</span>
+                  <span className="text-sm font-bold text-black">{getCurrencySymbol('香港')}13,500</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-500">供货库存</span>
@@ -382,16 +388,16 @@ export function ProductManagement() {
                 </div>
               </div>
 
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-400">HK$15,000</div>
+              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-400">{getCurrencySymbol('香港')}15,000</div>
               <div className="hidden md:flex col-span-2 flex-col items-center justify-center gap-1">
                 <div className="text-xs font-bold">均码</div>
                 <div className="text-[10px] text-zinc-500">香港直邮仓</div>
               </div>
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">HK$16,500</div>
+              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">{getCurrencySymbol('香港')}16,500</div>
               <div className="hidden md:block col-span-1 text-center font-black text-lg">
                 24
               </div>
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">HK$13,500</div>
+              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">{getCurrencySymbol('香港')}13,500</div>
               <div className="hidden md:block col-span-1 text-center font-black text-lg text-blue-600">
                 12
               </div>
@@ -432,11 +438,11 @@ export function ProductManagement() {
               <div className="md:hidden flex flex-col gap-2 mt-2 bg-zinc-50 p-3 rounded-sm border border-zinc-100 mx-2 md:mx-0 opacity-70">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-500">品牌原价</span>
-                  <span className="text-sm font-bold text-zinc-400">¥280,000</span>
+                  <span className="text-sm font-bold text-zinc-400">{getCurrencySymbol('欧洲')}280,000</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-500">零售价</span>
-                  <span className="text-sm font-bold text-zinc-300 line-through">¥1,250,000</span>
+                  <span className="text-sm font-bold text-zinc-300 line-through">{getCurrencySymbol('欧洲')}1,250,000</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-500">零售库存</span>
@@ -444,7 +450,7 @@ export function ProductManagement() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-500">供货价</span>
-                  <span className="text-sm font-bold text-zinc-300 line-through">¥1,180,000</span>
+                  <span className="text-sm font-bold text-zinc-300 line-through">{getCurrencySymbol('欧洲')}1,180,000</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-500">供货库存</span>
@@ -452,16 +458,16 @@ export function ProductManagement() {
                 </div>
               </div>
 
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-400">¥280,000</div>
+              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-400">{getCurrencySymbol('欧洲')}280,000</div>
               <div className="hidden md:flex col-span-2 flex-col items-center justify-center gap-1">
                 <div className="text-xs font-bold text-zinc-400 line-through">均码</div>
                 <div className="text-[10px] text-zinc-400 line-through">欧洲仓 (EU)</div>
               </div>
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-300 line-through">¥1,250,000</div>
+              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-300 line-through">{getCurrencySymbol('欧洲')}1,250,000</div>
               <div className="hidden md:block col-span-1 text-center font-black text-lg text-red-500">
                 0
               </div>
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-300 line-through">¥1,180,000</div>
+              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-300 line-through">{getCurrencySymbol('欧洲')}1,180,000</div>
               <div className="hidden md:block col-span-1 text-center font-black text-lg text-red-500">
                 0
               </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, X, Plus, Trash2, Download, Upload, Wallet } from 'lucide-react';
 
 interface CartItem {
@@ -19,7 +19,10 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [customerInfo, setCustomerInfo] = useState<{ name: string; phone: string; address: string } | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [depositType, setDepositType] = useState<'full' | 'deposit'>('deposit');
+  const [depositPercent, setDepositPercent] = useState<number>(30);
   const [depositAmount, setDepositAmount] = useState<number>(0);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('1'); // Default to HK
   const [shippingManual, setShippingManual] = useState<number | null>(null);
   const [selectedShippingRule, setSelectedShippingRule] = useState<string>('auto');
 
@@ -39,6 +42,17 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
     other: 40
   };
 
+  const WAREHOUSES = [
+    { id: '1', name: '香港直邮仓', currency: 'HKD', symbol: 'HK$' },
+    { id: '2', name: '欧洲仓库', currency: 'EUR', symbol: '€' },
+    { id: '3', name: 'UNIBUY大陆仓', currency: 'CNY', symbol: '¥' },
+  ];
+
+  const currentWarehouse = WAREHOUSES.find(w => w.id === selectedWarehouseId) || WAREHOUSES[0];
+
+  const updateCartItem = (id: string, updates: Partial<CartItem>) => {
+    setCart(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+  };
   const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
   const [newCustomerForm, setNewCustomerForm] = useState({ phone: '', name: '' });
 
@@ -78,6 +92,14 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
 
   const totalShipping = shippingManual !== null ? shippingManual : calculateAutoShipping();
   const totalAmount = cart.reduce((sum, item) => sum + item.price * item.count, 0);
+
+  useEffect(() => {
+    if (depositType === 'full') {
+      setDepositAmount(totalAmount);
+    } else {
+      setDepositAmount(Math.round(totalAmount * (depositPercent / 100)));
+    }
+  }, [totalAmount, depositType, depositPercent]);
 
   const searchCustomer = () => {
     if (customerPhone.length >= 11) {
@@ -130,6 +152,26 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
           {/* Left Side: Product Selection and Search */}
           <div className="flex-1 flex flex-col border-r border-zinc-100 overflow-hidden">
             <div className="p-6 border-b border-zinc-100">
+              <div className="flex gap-4 mb-6">
+                  <div className="flex-1">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">选择发货仓库 (按仓结算)</label>
+                    <select 
+                      value={selectedWarehouseId}
+                      onChange={(e) => {
+                        setSelectedWarehouseId(e.target.value);
+                        setCart([]); // Clear cart when warehouse changes to ensure single-warehouse order
+                      }}
+                      className="w-full py-3 px-4 bg-zinc-50 border border-zinc-200 focus:border-black outline-none font-bold text-sm appearance-none cursor-pointer"
+                    >
+                      {WAREHOUSES.map(w => (
+                        <option key={w.id} value={w.id}>
+                          {w.name} ({w.currency} / {w.symbol})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+              </div>
+
               <div className="flex gap-4 mb-6">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
@@ -217,6 +259,10 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
               </div>
             </div>
 
+            <div className="px-6 py-2 bg-zinc-50 border-b border-zinc-100 flex items-center justify-between">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">可供货品列表 ({currentWarehouse.name})</span>
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">结算币种: {currentWarehouse.currency}</span>
+            </div>
             <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 gap-4">
               {[
                 { id: '1', name: 'Rolex Submariner 126610LN', itemNo: 'RLX-126610', price: 67500, category: 'other', image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=100&q=80' },
@@ -232,7 +278,7 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
                       <div className="text-xs font-bold line-clamp-1">{prod.name}</div>
                       <div className="text-[10px] text-zinc-400 font-mono mt-1">货号: {prod.itemNo}</div>
                       <div className="flex justify-between items-end mt-2">
-                        <span className="text-sm font-black">¥{prod.price.toLocaleString()}</span>
+                        <span className="text-sm font-black">{currentWarehouse.symbol}{prod.price.toLocaleString()}</span>
                         <button 
                           onClick={() => addToCart(prod)}
                           className="w-8 h-8 bg-zinc-50 text-black flex items-center justify-center hover:bg-black hover:text-white transition-colors"
@@ -256,15 +302,37 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
                   <div className="text-center py-12 text-zinc-400 text-xs italic">购物车为空</div>
                 )}
                 {cart.map(item => (
-                  <div key={item.id} className="flex gap-3 bg-white p-2 border border-zinc-100 items-center">
-                    <div className="w-10 h-10 bg-zinc-50 p-1">
-                      <img src={item.image} className="w-full h-full object-contain mix-blend-multiply grayscale" />
+                  <div key={item.id} className="flex flex-col bg-white p-3 border border-zinc-100 gap-2">
+                    <div className="flex gap-3 items-center">
+                      <div className="w-8 h-8 bg-zinc-50 p-1">
+                        <img src={item.image} className="w-full h-full object-contain mix-blend-multiply grayscale" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[10px] font-bold line-clamp-1">{item.name}</div>
+                        <div className="text-[9px] text-zinc-400 font-mono">{item.itemNo}</div>
+                      </div>
+                      <button onClick={() => removeFromCart(item.id)} className="text-zinc-300 hover:text-red-500"><Trash2 size={14} /></button>
                     </div>
-                    <div className="flex-1">
-                      <div className="text-[10px] font-bold line-clamp-1">{item.name}</div>
-                      <div className="text-[10px] text-zinc-400">¥{item.price.toLocaleString()} x {item.count}</div>
+                    <div className="flex gap-2 items-center">
+                       <div className="flex-1 relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400">{currentWarehouse.symbol}</span>
+                          <input 
+                            type="number" 
+                            value={item.price}
+                            onChange={(e) => updateCartItem(item.id, { price: Number(e.target.value) })}
+                            className="w-full pl-6 pr-2 py-1 text-[10px] border border-zinc-200 outline-none focus:border-black font-mono font-bold"
+                          />
+                       </div>
+                       <div className="w-16 relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400 italic">x</span>
+                          <input 
+                            type="number" 
+                            value={item.count}
+                            onChange={(e) => updateCartItem(item.id, { count: Number(e.target.value) })}
+                            className="w-full pl-6 pr-2 py-1 text-[10px] border border-zinc-200 outline-none focus:border-black font-mono font-bold"
+                          />
+                       </div>
                     </div>
-                    <button onClick={() => removeFromCart(item.id)} className="text-zinc-300 hover:text-red-500"><Trash2 size={14} /></button>
                   </div>
                 ))}
               </div>
@@ -272,29 +340,57 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
 
             <div className="flex-1 p-6 space-y-6">
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest text-[10px]">定金比例 (当前设置)</span>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest text-[10px]">支付方式</span>
                   <div className="flex gap-2">
-                    {[0, 30, 50, 100].map(p => (
-                      <button 
-                        key={p} 
-                        onClick={() => setDepositAmount(Math.round(totalAmount * (p / 100)))}
-                        className={`text-[10px] font-bold px-2 py-1 border transition-colors ${depositAmount === Math.round(totalAmount * (p/100)) ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-zinc-500'}`}
-                      >
-                        {p}%
-                      </button>
-                    ))}
+                    <button 
+                      onClick={() => setDepositType('full')}
+                      className={`text-[10px] font-bold px-3 py-1 border transition-colors ${depositType === 'full' ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-zinc-500'}`}
+                    >
+                      全款
+                    </button>
+                    <button 
+                      onClick={() => setDepositType('deposit')}
+                      className={`text-[10px] font-bold px-3 py-1 border transition-colors ${depositType === 'deposit' ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-zinc-500'}`}
+                    >
+                      定金
+                    </button>
                   </div>
                 </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">定金金额: ¥</span>
-                  <input 
-                    type="number" 
-                    value={depositAmount} 
-                    onChange={(e) => setDepositAmount(Number(e.target.value))}
-                    className="w-full pl-20 pr-4 py-2 border border-zinc-200 focus:border-black outline-none font-mono text-sm" 
-                  />
-                </div>
+
+                {depositType === 'deposit' && (
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest text-[10px]">定金比例</span>
+                    <div className="flex gap-2">
+                      {[0, 30, 50].map(p => (
+                        <button 
+                          key={p} 
+                          onClick={() => setDepositPercent(p)}
+                          className={`text-[10px] font-bold px-2 py-1 border transition-colors ${depositPercent === p ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-zinc-500'}`}
+                        >
+                          {p}%
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {depositType === 'deposit' ? (
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">定金金额: {currentWarehouse.symbol}</span>
+                    <input 
+                      type="number" 
+                      value={depositAmount} 
+                      onChange={(e) => setDepositAmount(Number(e.target.value))}
+                      className="w-full pl-24 pr-4 py-2 border border-zinc-200 outline-none font-mono text-sm bg-white focus:border-black" 
+                    />
+                  </div>
+                ) : (
+                  <div className="p-3 bg-zinc-100 border border-zinc-200 text-xs font-bold flex justify-between">
+                    <span className="text-zinc-500">支付总额 (全款)</span>
+                    <span>{currentWarehouse.symbol} {totalAmount.toLocaleString()}</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -325,19 +421,19 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
                         return (
                           <div key={cat} className="flex justify-between text-[10px] font-mono">
                             <span className="text-zinc-500">{cat === 'shoes' ? '鞋类' : cat === 'clothes' ? '衣物' : cat === 'bags' ? '箱包' : '其他'} (x{count})</span>
-                            <span className="font-bold">¥{(shippingTemplate[cat as keyof typeof shippingTemplate] || 0) * count}</span>
+                            <span className="font-bold">{currentWarehouse.symbol}{(shippingTemplate[cat as keyof typeof shippingTemplate] || 0) * count}</span>
                           </div>
                         );
                       })}
                       <div className="pt-2 mt-2 border-t border-zinc-100 flex justify-between font-bold text-xs">
                         <span>规则合计</span>
-                        <span>¥{calculateAutoShipping()}</span>
+                        <span>{currentWarehouse.symbol}{calculateAutoShipping()}</span>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">手动运费: ¥</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">手动运费: {currentWarehouse.symbol}</span>
                     <input 
                       type="number" 
                       value={shippingManual || ''} 
@@ -352,15 +448,15 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
               <div className="pt-6 border-t border-zinc-200 space-y-2">
                 <div className="flex justify-between text-xs font-bold">
                   <span>商品小计</span>
-                  <span>¥{totalAmount.toLocaleString()}.00</span>
+                  <span>{currentWarehouse.symbol}{totalAmount.toLocaleString()}.00</span>
                 </div>
                 <div className="flex justify-between text-xs font-bold text-zinc-500">
                   <span>运费</span>
-                  <span>¥{totalShipping.toLocaleString()}.00</span>
+                  <span>{currentWarehouse.symbol}{totalShipping.toLocaleString()}.00</span>
                 </div>
                 <div className="flex justify-between text-lg font-black pt-2">
                   <span>订单总额</span>
-                  <span>¥{(totalAmount + totalShipping).toLocaleString()}.00</span>
+                  <span>{currentWarehouse.symbol}{(totalAmount + totalShipping).toLocaleString()}.00</span>
                 </div>
               </div>
             </div>

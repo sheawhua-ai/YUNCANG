@@ -23,6 +23,9 @@ const MOCK_ORDERS = [
     reconciliationRecords: [],
     uploadedSlips: [
       { id: "slip-1", uploadTime: "2024-05-02 14:30", imageUrl: "https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?w=400&q=80", status: "pending" }
+    ],
+    progress: [
+      { id: '1', time: '2024-05-02 10:00', description: '销售帮客户下单 (定金模式)', amountChange: '-' },
     ]
   },
   {
@@ -43,6 +46,10 @@ const MOCK_ORDERS = [
     ],
     uploadedSlips: [
       { id: "slip-2", uploadTime: "2024-05-02 09:00", imageUrl: "https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?w=400&q=80", status: "confirmed" }
+    ],
+    progress: [
+      { id: '1', time: '2024-05-02 09:00', description: '买家上传定金水单', amountChange: '-' },
+      { id: '2', time: '2024-05-02 10:15', description: '财务核销定金', amountChange: '+¥2,000' }
     ]
   },
   {
@@ -134,6 +141,15 @@ export function FinanceAudit() {
   const [ordersData, setOrdersData] = useState(MOCK_ORDERS);
   const [inputAmounts, setInputAmounts] = useState<Record<string, string>>({});
   const [viewingSlip, setViewingSlip] = useState<{url?: string, slipId: string, orderId: string, isManual?: boolean} | null>(null);
+  const [isManualUploadModalOpen, setIsManualUploadModalOpen] = useState(false);
+  const [manualSlipOrder, setManualSlipOrder] = useState<string | null>(null);
+
+  const getCurrencySymbol = (orderId: string) => {
+    // In a real app we'd check order.warehouse. For now, we simulate based on ID or defaults
+    if (orderId.includes('DEP')) return 'HK$';
+    if (orderId.includes('FUL')) return '€';
+    return '¥';
+  };
   
   // Date Range State
   const [dateRange, setDateRange] = useState<{start: string | null, end: string | null}>({ start: "2024-05-01", end: "2024-05-05" });
@@ -199,6 +215,12 @@ export function FinanceAudit() {
 
         // Update total paid
         updatedOrder.confirmedPaid += amount;
+
+        // Add to progress
+        updatedOrder.progress = [
+          ...(updatedOrder.progress || []),
+          { id: `p-${Date.now()}`, time: timeStr, description: slipId.startsWith('manual') ? '财务手动录入收款' : '财务核销水单', amountChange: `+${getCurrencySymbol(orderId)}${amount.toLocaleString()}` }
+        ];
         return updatedOrder;
       }
       return order;
@@ -206,6 +228,30 @@ export function FinanceAudit() {
 
     setInputAmounts(prev => ({ ...prev, [slipId]: "" }));
     setViewingSlip(null);
+  };
+
+  const handleManualSlipUpload = (orderId: string) => {
+    const slipId = `manual-${Date.now()}`;
+    const now = new Date();
+    const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    setOrdersData(prev => prev.map(order => {
+      if (order.orderId === orderId) {
+        return {
+          ...order,
+          uploadedSlips: [
+            ...order.uploadedSlips,
+            { id: slipId, uploadTime: timeStr, imageUrl: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&q=80", status: "pending", isManual: true }
+          ],
+          progress: [
+            ...(order.progress || []),
+            { id: `p-${Date.now()}`, time: timeStr, description: '财务代传水单凭证', amountChange: '-' }
+          ]
+        };
+      }
+      return order;
+    }));
+    setIsManualUploadModalOpen(false);
   };
 
   // Calendar Logic
@@ -485,13 +531,13 @@ export function FinanceAudit() {
                   
                   <div className="md:col-span-2 md:pr-4 md:text-right">
                     <div className="text-xs text-zinc-500 md:hidden mb-1">应收金额</div>
-                    <div className="text-sm font-bold">¥ {totalDue.toLocaleString()}</div>
+                    <div className="text-sm font-bold">{getCurrencySymbol(order.orderId)} {totalDue.toLocaleString()}</div>
                   </div>
                   
                   <div className="md:col-span-2 md:pr-4 md:text-right">
                     <div className="text-xs text-zinc-500 md:hidden mb-1">待核销金额</div>
                     <div className={`text-sm font-bold ${pendingAmount > 0 ? 'text-red-500' : 'text-zinc-600'}`}>
-                      ¥ {pendingAmount.toLocaleString()}
+                      {getCurrencySymbol(order.orderId)} {pendingAmount.toLocaleString()}
                     </div>
                   </div>
                   
@@ -1122,10 +1168,10 @@ export function FinanceAudit() {
                         <div className="bg-white border border-zinc-200 p-4">
                           <div className="text-xs text-zinc-500 mb-1">当前待付金额</div>
                           <div className={`text-xl font-black ${pendingAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            ¥ {pendingAmount.toLocaleString()}
+                            {getCurrencySymbol(order.orderId)} {pendingAmount.toLocaleString()}
                           </div>
                           <div className="text-[10px] text-zinc-400 mt-2">
-                            已确认收款: ¥{order.confirmedPaid.toLocaleString()}
+                            已确认收款: {getCurrencySymbol(order.orderId)}{order.confirmedPaid.toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -1141,7 +1187,7 @@ export function FinanceAudit() {
                                   <CheckCircle2 size={14} className="text-green-600" />
                                   {rec.time}
                                 </div>
-                                <div className="font-bold">¥ {rec.amount.toLocaleString()}</div>
+                                <div className="font-bold text-black">{getCurrencySymbol(order.orderId)} {rec.amount.toLocaleString()}</div>
                               </div>
                             ))}
                           </div>
@@ -1168,13 +1214,13 @@ export function FinanceAudit() {
                                 <div key={slip.id} className="flex items-center justify-between bg-white border border-zinc-200 p-3">
                                   <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-zinc-100 flex items-center justify-center text-zinc-400">
-                                      <ImageIcon size={18} />
+                                      {slip.imageUrl ? <img src={slip.imageUrl} className="w-full h-full object-cover" /> : <ImageIcon size={18} />}
                                     </div>
                                     <div>
-                                      <div className="text-xs font-bold mb-0.5">银行汇款凭证</div>
+                                      <div className="text-xs font-bold mb-0.5">{slip.isManual ? '客服/财务代传凭证' : '银行汇款凭证'}</div>
                                       <div className="text-[10px] text-zinc-500 flex items-center gap-1">
                                         <Clock size={10} />
-                                        上传于 {slip.uploadTime}
+                                        {slip.isManual ? '上传于' : '上传于'} {slip.uploadTime}
                                       </div>
                                     </div>
                                   </div>
@@ -1184,7 +1230,7 @@ export function FinanceAudit() {
                                     </span>
                                   ) : (
                                     <button 
-                                      onClick={() => setViewingSlip({ url: slip.imageUrl, slipId: slip.id, orderId: order.orderId })}
+                                      onClick={() => setViewingSlip({ url: slip.imageUrl, slipId: slip.id, orderId: order.orderId, isManual: slip.isManual })}
                                       className="text-xs font-bold bg-black text-white px-4 py-2 hover:bg-zinc-800 transition-colors"
                                     >
                                       查看并核销
@@ -1194,8 +1240,15 @@ export function FinanceAudit() {
                               ))}
                             </div>
                           ) : (
-                            <div className="text-center py-6 text-xs text-zinc-500 bg-white border border-dashed border-zinc-300 gap-3">
-                              <span>暂无待核销的水单记录</span>
+                            <div className="flex flex-col items-center justify-center py-10 text-xs text-zinc-500 bg-white border border-dashed border-zinc-300 gap-3">
+                              <ImageIcon size={24} className="opacity-20" />
+                              <span>买家暂未上传水单记录</span>
+                              <button 
+                                onClick={() => handleManualSlipUpload(order.orderId)}
+                                className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 hover:border-black transition-colors"
+                              >
+                                财务代传水单 (手动核销)
+                              </button>
                             </div>
                           )}
 
@@ -1205,7 +1258,7 @@ export function FinanceAudit() {
                               onClick={() => setViewingSlip({ slipId: `manual-${Date.now()}`, orderId: order.orderId, isManual: true })}
                               className="text-xs font-bold bg-black text-white px-6 py-2 hover:bg-zinc-800 transition-colors cursor-pointer"
                             >
-                              补充其它核销金额
+                              直接录入收款金额 (无凭证)
                             </button>
                           </div>
                         </div>
@@ -1237,7 +1290,13 @@ export function FinanceAudit() {
             <div className="flex flex-col md:flex-row h-[600px]">
               {/* Image Preview */}
               <div className="flex-1 bg-zinc-100 p-6 flex flex-col items-center justify-center overflow-hidden">
-                {viewingSlip.url ? (
+                {viewingSlip.isManual ? (
+                  <div className="flex flex-col items-center justify-center gap-3 opacity-60 text-zinc-400">
+                    <ImageIcon size={48} className="opacity-20" />
+                    <div className="text-xs font-black uppercase tracking-widest">财务手动核销模式</div>
+                    <div className="text-[10px] text-center max-w-[200px]">已由财务/客服核实线下到账，<br />请录入实际收到的结算币种金额</div>
+                  </div>
+                ) : viewingSlip.url ? (
                   <img src={viewingSlip.url} alt="Bank Slip" className="max-w-full max-h-full object-contain shadow-md" />
                 ) : (
                   <div className="text-zinc-400 flex flex-col items-center justify-center gap-4">
@@ -1259,7 +1318,7 @@ export function FinanceAudit() {
                 <div className="mt-auto">
                   <label className="block text-xs font-bold mb-2">录入实际收到金额</label>
                   <div className="relative mb-4">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">¥</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">{getCurrencySymbol(viewingSlip.orderId)}</span>
                     <input 
                       type="number" 
                       placeholder="输入金额..."
@@ -1284,11 +1343,10 @@ export function FinanceAudit() {
       )}
       {/* Associated Order Detail Drawer */}
       {viewingWorkOrderAssociated && (() => {
-        // Mock order details
-        const mockProgress = [
+        const orderInfo = ordersData.find(o => o.orderId === viewingWorkOrderAssociated);
+        const progressList = orderInfo?.progress || [
           { id: '1', time: '2024-05-10 10:00', description: '买家付款', amountChange: '+¥28,000' },
-          { id: '2', time: '2024-05-11 11:30', description: '供货商确认部分商品', amountChange: '-' },
-          { id: '3', time: '2024-05-12 09:15', description: '发起财务关联工单', amountChange: '-¥5,000' }
+          { id: '2', time: '2024-05-11 11:30', description: '供货商确认部分商品', amountChange: '-' }
         ];
         return (
           <div className="fixed inset-0 z-40 flex justify-end md:p-4">
@@ -1307,17 +1365,19 @@ export function FinanceAudit() {
                 <div className="grid grid-cols-2 gap-4 mb-8">
                   <div className="bg-zinc-50 p-4 border border-zinc-100">
                     <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">已收款金额</div>
-                    <div className="font-mono text-sm font-black text-green-600">¥ 28,000</div>
+                    <div className="font-mono text-sm font-black text-green-600">{getCurrencySymbol(viewingWorkOrderAssociated)} {orderInfo?.confirmedPaid?.toLocaleString() || '0'}</div>
                   </div>
                   <div className="bg-zinc-50 p-4 border border-zinc-100">
-                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">已确认商品件数</div>
-                    <div className="font-mono text-sm font-black text-blue-600">2 件</div>
+                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">已确认商品金额</div>
+                    <div className="font-mono text-sm font-black text-blue-600">
+                      {getCurrencySymbol(viewingWorkOrderAssociated)} {orderInfo?.items?.filter((i: any) => i.status !== 'pending_confirmation' && i.status !== 'pending_payment').reduce((s: number, i: any) => s + i.price * i.count, 0).toLocaleString() || '0'}
+                    </div>
                   </div>
                 </div>
 
                 <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">订单进程</div>
                 <div className="space-y-3">
-                  {mockProgress.map(p => (
+                  {progressList.map(p => (
                     <div key={p.id} className="flex gap-4">
                       <div className="flex flex-col items-center">
                         <div className="w-2 h-2 rounded-full bg-black mt-1.5"></div>
