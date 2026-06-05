@@ -12,13 +12,13 @@ export function ProductManagement() {
   const [isLogOpen, setIsLogOpen] = useState(false);
   const [editingSpu, setEditingSpu] = useState<string | null>(null);
   const [activeWarehouseTab, setActiveWarehouseTab] = useState<'domestic' | 'overseas'>('domestic');
-  const [activeListTab, setActiveListTab] = useState<'on_sale' | 'in_warehouse' | 'delisted'>('on_sale');
+  const [activeListTab, setActiveListTab] = useState<'on_sale' | 'offline' | 'sold_out' | 'pending_mapping'>('on_sale');
   const [isBatchApplyModalOpen, setIsBatchApplyModalOpen] = useState(false);
 
   const [filterBrands, setFilterBrands] = useState<string[]>([]);
   const [filterCategories, setFilterCategories] = useState<string[]>([]);
   const [filterWarehouses, setFilterWarehouses] = useState<string[]>([]);
-  const [filterMarketplaceOffer, setFilterMarketplaceOffer] = useState<string>('all');
+  const [filterMarketplaceStatus, setFilterMarketplaceStatus] = useState<string>('all');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   const allWarehouses = [
@@ -38,30 +38,11 @@ export function ProductManagement() {
     <div className="max-w-7xl mx-auto pb-24 md:pb-0">
       <div className="flex flex-col md:flex-row justify-between md:items-end mb-6 md:mb-8 gap-4">
         <div>
-          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">Supplier Dashboard</div>
+          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">商家管理面板</div>
           <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase mb-2">商品管理</h1>
           <p className="text-xs md:text-sm text-zinc-500">管理全球精品库存、规格及定价模式</p>
         </div>
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-zinc-200 z-20 flex flex-wrap gap-2 md:static md:bg-transparent md:border-none md:p-0 md:flex-nowrap md:gap-3 items-center">
-          <button
-            className={`flex-1 md:flex-none justify-center bg-white border border-zinc-200 text-black px-4 md:px-6 py-3 flex items-center gap-2 font-bold transition-colors ${activeListTab === 'in_warehouse' ? 'hover:bg-zinc-50' : 'opacity-50 cursor-not-allowed'}`}
-            disabled={activeListTab !== 'in_warehouse'}
-            onClick={() => {
-               if(activeListTab === 'in_warehouse') {
-                  if (selectedProducts.length === 0) {
-                    // Muted interaction rather than native alert.
-                    // This creates a slightly friendlier experience without disrupting workflow.
-                    const text = '请先勾选需要新建公共库商品的项';
-                    if (typeof window !== 'undefined') window.alert(text);
-                    return;
-                  }
-                  setIsBatchApplyModalOpen(true);
-               }
-            }}
-            title={activeListTab === 'in_warehouse' ? '' : '请先切换到"仓库中"进行公共库商品映射创建'}
-          >
-            申请新增至公共库
-          </button>
           <button 
             onClick={() => setIsLogOpen(true)}
             className="flex-1 md:flex-none justify-center bg-white border border-zinc-200 text-black px-4 md:px-6 py-3 flex items-center gap-2 font-bold hover:bg-zinc-50 transition-colors"
@@ -86,6 +67,8 @@ export function ProductManagement() {
         </div>
       </div>
 
+      {/* Workflow Pipeline removed as per user request */}
+
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center justify-between overflow-x-auto hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
           <div className="flex gap-8 border-b border-zinc-200 w-full md:max-w-2xl whitespace-nowrap">
@@ -93,19 +76,19 @@ export function ProductManagement() {
               onClick={() => setActiveListTab('on_sale')}
               className={`pb-3 text-xs font-bold transition-colors ${activeListTab === 'on_sale' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
             >
-              在售商品 (已映射)
+              出售中 / 待对标
             </button>
             <button 
-              onClick={() => setActiveListTab('in_warehouse')}
-              className={`pb-3 text-xs font-bold transition-colors ${activeListTab === 'in_warehouse' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
+              onClick={() => setActiveListTab('offline')}
+              className={`pb-3 text-xs font-bold transition-colors ${activeListTab === 'offline' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
             >
-              仓库中 (未映射公共库)
+              仓库中 / 已下架
             </button>
             <button 
-              onClick={() => setActiveListTab('delisted')}
-              className={`pb-3 text-xs font-bold transition-colors ${activeListTab === 'delisted' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
+              onClick={() => setActiveListTab('sold_out')}
+              className={`pb-3 text-xs font-bold transition-colors ${activeListTab === 'sold_out' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
             >
-              已下架 / 售罄
+              已售罄
             </button>
           </div>
         </div>
@@ -139,6 +122,18 @@ export function ProductManagement() {
                 placeholder="全部仓库" 
               />
             </div>
+            <div className="w-full md:w-32 col-span-2 md:col-span-1">
+              <select 
+                value={filterMarketplaceStatus}
+                onChange={(e) => setFilterMarketplaceStatus(e.target.value)}
+                className="w-full h-[36px] bg-white border border-zinc-200 px-3 text-xs font-bold outline-none"
+              >
+                <option value="all">集市状态: 全部</option>
+                <option value="listed">已在集市在售</option>
+                <option value="not_listed">未出价到集市</option>
+                <option value="mapping">匹配处理中</option>
+              </select>
+            </div>
           </div>
           <button className="w-full md:w-auto bg-black text-white px-6 py-2 text-xs font-bold hover:bg-zinc-800 transition-colors h-[36px]">
             查询
@@ -146,9 +141,29 @@ export function ProductManagement() {
         </div>
       </div>
 
+      <div className="bg-white border border-zinc-200 shadow-sm mt-4 p-4 border-b-0 flex items-center gap-3">
+        <div className="flex items-center gap-2 bg-zinc-50 px-3 py-2 border border-zinc-200">
+          <input 
+            type="checkbox" 
+            className="accent-black w-4 h-4"
+            checked={selectedProducts.length > 0}
+            onChange={(e) => {
+              if (e.target.checked) setSelectedProducts(['rolex', 'burberry', 'gucci', 'patek']);
+              else setSelectedProducts([]);
+            }}
+          />
+          <span className="text-[10px] font-bold">全选</span>
+        </div>
+        {activeListTab === 'pending_mapping' && (
+          <button className="bg-black text-white px-4 py-2 text-[10px] font-bold hover:bg-zinc-800 transition-colors">
+            批量申请新增公共库
+          </button>
+        )}
+      </div>
+
       <div className="bg-white border border-zinc-200 shadow-sm">
         <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-zinc-200 bg-zinc-50 text-[10px] font-bold text-zinc-500 uppercase tracking-widest items-center">
-          <div className="col-span-3 flex items-center gap-2">
+          <div className="col-span-4 flex items-center gap-2">
             <input 
               type="checkbox" 
               className="accent-black w-4 h-4 mr-2" 
@@ -163,12 +178,8 @@ export function ProductManagement() {
             />
             商品信息 / SPU 名称
           </div>
-          <div className="col-span-1 text-right">品牌原价</div>
-          <div className="col-span-2 text-center">规格与仓库</div>
-          <div className="col-span-1 text-right">零售价</div>
-          <div className="col-span-1 text-center">零售库存</div>
-          <div className="col-span-1 text-right">供货价</div>
-          <div className="col-span-1 text-center">供货库存</div>
+          <div className="col-span-4 text-center">规格与仓库</div>
+          <div className="col-span-2 text-center font-bold text-zinc-500 uppercase tracking-widest">集市状态</div>
           <div className="col-span-2 text-center">操作</div>
         </div>
 
@@ -177,7 +188,7 @@ export function ProductManagement() {
             {/* Row 1 */}
             <div className="border-b border-zinc-200 group">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors">
-                <div className="md:col-span-3 flex items-start md:items-center gap-4">
+                <div className="md:col-span-4 flex items-start md:items-center gap-4">
                   <input 
                     type="checkbox" 
                     className="accent-black w-4 h-4 mt-2 md:mt-0 shrink-0" 
@@ -200,54 +211,19 @@ export function ProductManagement() {
                   </div>
                 </div>
 
-                {/* Mobile Extra Info Card */}
-                <div className="md:hidden flex flex-col gap-2 mt-2 bg-zinc-50 p-3 rounded-sm border border-zinc-100 mx-2 md:mx-0">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">品牌原价</span>
-                    <span className="text-sm font-bold text-zinc-400">{getCurrencySymbol('香港')}85,000</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">零售价</span>
-                    <span className="text-sm font-bold text-black">{getCurrencySymbol('香港')}95,000</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">零售库存</span>
-                    <span className="font-black text-lg">15</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">供货价</span>
-                    <span className="text-sm font-bold text-black">{getCurrencySymbol('香港')}82,000</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">供货库存</span>
-                    <span className="font-black text-lg text-blue-600">10</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">规格/仓库</span>
-                    <div className="text-right">
-                      <div className="text-xs font-bold text-black">40mm, 41mm</div>
-                      <div className="text-[10px] text-zinc-500">香港直邮仓</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-400">{getCurrencySymbol('香港')}85,000</div>
-                <div className="hidden md:flex col-span-2 flex-col items-center justify-center gap-1">
+                <div className="hidden md:flex col-span-4 flex-col items-center justify-center gap-1">
                   <div className="text-xs font-bold">40mm, 41mm</div>
                   <div className="text-[10px] text-zinc-500">香港直邮仓</div>
                 </div>
-                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">{getCurrencySymbol('香港')}95,000</div>
-                <div className="hidden md:block col-span-1 text-center font-black text-lg">
-                  15
-                </div>
-                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">{getCurrencySymbol('香港')}82,000</div>
-                <div className="hidden md:block col-span-1 text-center font-black text-lg text-blue-600">
-                  10
+
+                <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                   <div className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-sm">已在集市在售</div>
+                   <div className="text-[9px] text-zinc-400 mt-1 uppercase tracking-tighter tracking-widest font-bold">SPU 对标: 100%</div>
                 </div>
                 
-                <div className="mt-2 md:mt-0 md:col-span-2 flex justify-end md:justify-center items-center gap-3 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto">
-                  <button className="flex-1 md:flex-none text-xs font-bold text-zinc-600 hover:text-black transition-colors px-4 py-2 border border-zinc-200 md:border-none md:p-0 bg-white md:bg-transparent" onClick={() => setEditingSpu('rolex')}>编辑</button>
-                  <button className="flex-1 md:flex-none text-xs font-bold text-red-600 hover:text-red-700 transition-colors px-4 py-2 border border-red-100 bg-red-50 md:bg-transparent md:border-none md:p-0">下架</button>
+                <div className="mt-2 md:mt-0 md:col-span-2 flex justify-end md:justify-center items-center gap-4 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto">
+                  <button className="text-xs font-bold text-zinc-600 hover:text-black transition-colors" onClick={() => setEditingSpu('rolex')}>详情</button>
+                  <button className="text-xs font-bold text-red-600 hover:text-red-700 transition-colors">下架</button>
                 </div>
               </div>
             </div>
@@ -255,7 +231,7 @@ export function ProductManagement() {
             {/* Row 2 */}
             <div className="border-b border-zinc-200 group">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors">
-                <div className="md:col-span-3 flex items-start md:items-center gap-4">
+                <div className="md:col-span-4 flex items-start md:items-center gap-4">
                   <input 
                     type="checkbox" 
                     className="accent-black w-4 h-4 mt-2 md:mt-0 shrink-0" 
@@ -278,64 +254,41 @@ export function ProductManagement() {
                   </div>
                 </div>
 
-                {/* Mobile Extra Info Card */}
-                <div className="md:hidden flex flex-col gap-2 mt-2 bg-zinc-50 p-3 rounded-sm border border-zinc-100 mx-2 md:mx-0">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">品牌原价</span>
-                    <span className="text-sm font-bold text-zinc-400">¥5,900</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">零售价</span>
-                    <span className="text-sm font-bold text-black">¥6,500</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">零售库存</span>
-                    <span className="font-black text-lg">137</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">供货价</span>
-                    <span className="text-sm font-bold text-black">¥4,800</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">供货库存</span>
-                    <span className="font-black text-lg text-blue-600">85</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-zinc-500">规格/仓库</span>
-                    <div className="text-right">
-                      <div className="text-xs font-bold text-black">S码, M码, L码</div>
-                      <div className="text-[10px] text-zinc-500">深圳保税仓, 杭州国内仓</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-400">¥5,900</div>
-                <div className="hidden md:flex col-span-2 flex-col items-center justify-center gap-1">
+                <div className="hidden md:flex col-span-4 flex-col items-center justify-center gap-1">
                   <div className="text-xs font-bold">S码, M码, L码</div>
                   <div className="text-[10px] text-zinc-500">深圳保税仓, 杭州国内仓</div>
                 </div>
-                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">¥6,500</div>
-                <div className="hidden md:block col-span-1 text-center font-black text-lg">
-                  137
-                </div>
-                <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">¥4,800</div>
-                <div className="hidden md:block col-span-1 text-center font-black text-lg text-blue-600">
-                  85
+
+                <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                   <div className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-sm">未出价</div>
+                   <div className="text-[9px] text-orange-500 mt-1 uppercase tracking-tighter tracking-widest font-bold">SPU 对标: 92%</div>
                 </div>
                 
-                <div className="mt-2 md:mt-0 md:col-span-2 flex justify-end md:justify-center items-center gap-3 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto">
-                  <button className="flex-1 md:flex-none text-xs font-bold text-zinc-600 hover:text-black transition-colors px-4 py-2 border border-zinc-200 md:border-none md:p-0 bg-white md:bg-transparent" onClick={() => setEditingSpu('burberry')}>编辑</button>
-                  <button className="flex-1 md:flex-none text-xs font-bold text-red-600 hover:text-red-700 transition-colors px-4 py-2 border border-red-100 bg-red-50 md:bg-transparent md:border-none md:p-0">下架</button>
+                <div className="mt-2 md:mt-0 md:col-span-2 flex justify-end md:justify-center items-center gap-4 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto">
+                  <button className="text-xs font-bold text-zinc-600 hover:text-black transition-colors" onClick={() => setEditingSpu('burberry')}>详情</button>
+                  <button className="text-xs font-bold text-red-600 hover:text-red-700 transition-colors">下架</button>
                 </div>
               </div>
             </div>
           </>
         )}
 
-        {activeListTab === 'in_warehouse' && (
+        {activeListTab === 'pending_mapping' && (
+          <div className="border-b border-zinc-200 p-12 flex flex-col items-center justify-center text-center bg-zinc-50/50">
+            <div className="w-16 h-16 bg-white border border-zinc-100 rounded-full flex items-center justify-center mb-4 shadow-sm">
+              <Search size={24} className="text-zinc-300" />
+            </div>
+            <h3 className="text-sm font-bold mb-2">暂无待补录商品</h3>
+            <p className="text-xs text-zinc-400 max-w-sm mb-6">所有自营商品已完成公共库对标，或已在补录审核流程中。</p>
+            <button className="bg-black text-white px-6 py-2 text-xs font-bold hover:bg-zinc-800 transition-colors">
+              手动触发资产扫描
+            </button>
+          </div>
+        )}
+        {(activeListTab === 'offline') && (
           <div className="border-b border-zinc-200 group">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors">
-              <div className="md:col-span-3 flex items-start md:items-center gap-4">
+              <div className="md:col-span-4 flex items-start md:items-center gap-4">
                 <input 
                   type="checkbox" 
                   className="accent-black w-4 h-4 mt-2 md:mt-0 shrink-0" 
@@ -358,61 +311,27 @@ export function ProductManagement() {
                 </div>
               </div>
 
-              <div className="md:hidden flex flex-col gap-2 mt-2 bg-zinc-50 p-3 rounded-sm border border-zinc-100 mx-2 md:mx-0 ml-8 md:ml-0">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">品牌原价</span>
-                  <span className="text-sm font-bold text-zinc-400">{getCurrencySymbol('香港')}15,000</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">零售价</span>
-                  <span className="text-sm font-bold text-black">{getCurrencySymbol('香港')}16,500</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">零售库存</span>
-                  <span className="font-black text-lg">24</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">供货价</span>
-                  <span className="text-sm font-bold text-black">{getCurrencySymbol('香港')}13,500</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">供货库存</span>
-                  <span className="font-black text-lg text-blue-600">12</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">规格/仓库</span>
-                  <div className="text-right">
-                    <div className="text-xs font-bold text-black">均码</div>
-                    <div className="text-[10px] text-zinc-500">香港直邮仓</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-400">{getCurrencySymbol('香港')}15,000</div>
-              <div className="hidden md:flex col-span-2 flex-col items-center justify-center gap-1">
+              <div className="hidden md:flex col-span-4 flex-col items-center justify-center gap-1">
                 <div className="text-xs font-bold">均码</div>
                 <div className="text-[10px] text-zinc-500">香港直邮仓</div>
               </div>
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">{getCurrencySymbol('香港')}16,500</div>
-              <div className="hidden md:block col-span-1 text-center font-black text-lg">
-                24
+
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                 <div className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-sm uppercase">待新增公共库</div>
               </div>
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-black">{getCurrencySymbol('香港')}13,500</div>
-              <div className="hidden md:block col-span-1 text-center font-black text-lg text-blue-600">
-                12
-              </div>
-              <div className="mt-2 md:mt-0 md:col-span-2 flex justify-end md:justify-center items-center gap-3 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto ml-8 md:ml-0">
-                <button className="flex-1 md:flex-none text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors px-4 py-2 border border-blue-200 bg-blue-50 md:bg-transparent md:border-none md:p-0" onClick={() => setIsBatchApplyModalOpen(true)}>申请映射</button>
-                <button className="flex-1 md:flex-none text-xs font-bold text-red-600 hover:text-red-700 transition-colors px-4 py-2 border border-red-100 bg-red-50 md:bg-transparent md:border-none md:p-0">删除</button>
+              
+              <div className="mt-2 md:mt-0 md:col-span-2 flex justify-end md:justify-center items-center gap-4 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto">
+                <button className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors" onClick={() => setIsBatchApplyModalOpen(true)}>申请映射</button>
+                <button className="text-xs font-bold text-red-600 hover:text-red-700 transition-colors">删除</button>
               </div>
             </div>
           </div>
         )}
 
-        {activeListTab === 'delisted' && (
-          <div className="group">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors">
-              <div className="md:col-span-3 flex items-start md:items-center gap-4">
+        {activeListTab === 'offline' && (
+          <div className="group opacity-75">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors text-zinc-500">
+              <div className="md:col-span-4 flex items-start md:items-center gap-4">
                 <input 
                   type="checkbox" 
                   className="accent-black w-4 h-4 mt-2 md:mt-0 shrink-0" 
@@ -427,53 +346,26 @@ export function ProductManagement() {
                 </div>
                 <div>
                   <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Patek Philippe</div>
-                  <div className="text-base font-black tracking-tight leading-none mb-2 text-zinc-500">Nautilus 5711/1A</div>
+                  <div className="text-base font-black tracking-tight leading-none mb-2 text-zinc-400">Nautilus 5711/1A</div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="bg-zinc-300 text-zinc-600 text-[9px] px-1.5 py-0.5 font-mono uppercase">PP-5711-BLU</span>
-                    <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1 rounded-sm">售罄 / 下架</span>
+                    <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1 rounded-sm">已下架</span>
                   </div>
                 </div>
               </div>
 
-              <div className="md:hidden flex flex-col gap-2 mt-2 bg-zinc-50 p-3 rounded-sm border border-zinc-100 mx-2 md:mx-0 opacity-70">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">品牌原价</span>
-                  <span className="text-sm font-bold text-zinc-400">{getCurrencySymbol('欧洲')}280,000</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">零售价</span>
-                  <span className="text-sm font-bold text-zinc-300 line-through">{getCurrencySymbol('欧洲')}1,250,000</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">零售库存</span>
-                  <span className="font-black text-lg text-red-500">0</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">供货价</span>
-                  <span className="text-sm font-bold text-zinc-300 line-through">{getCurrencySymbol('欧洲')}1,180,000</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">供货库存</span>
-                  <span className="font-black text-lg text-red-500">0</span>
-                </div>
+              <div className="hidden md:flex col-span-4 flex-col items-center justify-center gap-1 opacity-50">
+                <div className="text-xs font-bold">均码</div>
+                <div className="text-[10px] text-zinc-400">欧洲仓 (EU)</div>
               </div>
 
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-400">{getCurrencySymbol('欧洲')}280,000</div>
-              <div className="hidden md:flex col-span-2 flex-col items-center justify-center gap-1">
-                <div className="text-xs font-bold text-zinc-400 line-through">均码</div>
-                <div className="text-[10px] text-zinc-400 line-through">欧洲仓 (EU)</div>
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center opacity-50">
+                 <div className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-sm">离线</div>
               </div>
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-300 line-through">{getCurrencySymbol('欧洲')}1,250,000</div>
-              <div className="hidden md:block col-span-1 text-center font-black text-lg text-red-500">
-                0
-              </div>
-              <div className="hidden md:block col-span-1 text-right text-sm font-bold text-zinc-300 line-through">{getCurrencySymbol('欧洲')}1,180,000</div>
-              <div className="hidden md:block col-span-1 text-center font-black text-lg text-red-500">
-                0
-              </div>
-              <div className="mt-2 md:mt-0 md:col-span-2 flex justify-end md:justify-center items-center gap-3 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto">
-                <button className="flex-1 md:flex-none text-xs font-bold text-zinc-600 hover:text-black transition-colors px-4 py-2 border border-zinc-200 md:border-none md:p-0 bg-white md:bg-transparent" onClick={() => setEditingSpu('patek')}>编辑</button>
-                <button className="flex-1 md:flex-none text-xs font-bold text-red-600 hover:text-red-700 transition-colors px-4 py-2 border border-red-100 bg-red-50 md:bg-transparent md:border-none md:p-0">删除</button>
+
+              <div className="mt-2 md:mt-0 md:col-span-2 flex justify-end md:justify-center items-center gap-4 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto">
+                <button className="text-xs font-bold text-zinc-600 hover:text-black transition-colors" onClick={() => setEditingSpu('patek')}>详情</button>
+                <button className="text-xs font-bold text-red-600 hover:text-red-700 transition-colors">删除</button>
               </div>
             </div>
           </div>
@@ -624,14 +516,28 @@ export function ProductManagement() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-4 gap-6">
                   <div>
-                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">品牌原价 (¥)</label>
-                    <input type="number" defaultValue={5900} className="w-full border border-zinc-200 px-3 py-2 text-sm font-bold focus:border-black focus:ring-0 outline-none" />
+                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">大陆建议零售价 (¥)</label>
+                    <div className="flex items-center border border-zinc-200 bg-blue-50/30 px-3 py-2">
+                       <span className="text-xs font-bold mr-1">¥</span>
+                       <input type="number" defaultValue={5900} className="w-full text-sm font-bold bg-transparent focus:outline-none" />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">颜色 (SPU级)</label>
+                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">香港建议零售价 (HK$)</label>
+                    <div className="flex items-center border border-zinc-200 bg-orange-50/30 px-3 py-2">
+                       <span className="text-xs font-bold mr-1">HK$</span>
+                       <input type="number" defaultValue={6400} className="w-full text-sm font-bold bg-transparent focus:outline-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">SPU 颜色</label>
                     <input type="text" defaultValue="经典卡其色" className="w-full border border-zinc-200 px-3 py-2 text-sm font-bold focus:border-black focus:ring-0 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">品牌公价 (参考)</label>
+                    <input type="text" defaultValue="EUR 750" className="w-full border border-zinc-200 px-3 py-2 text-sm font-bold bg-zinc-50 focus:outline-none" />
                   </div>
                 </div>
               </div>
@@ -645,13 +551,13 @@ export function ProductManagement() {
                       onClick={() => setActiveWarehouseTab('domestic')}
                       className={`text-xs font-bold pb-1 transition-colors ${activeWarehouseTab === 'domestic' ? 'text-black border-b-2 border-black' : 'text-zinc-400 hover:text-black'}`}
                     >
-                      境内仓 (Domestic)
+                      境内仓
                     </button>
                     <button 
                       onClick={() => setActiveWarehouseTab('overseas')}
                       className={`text-xs font-bold pb-1 transition-colors ${activeWarehouseTab === 'overseas' ? 'text-black border-b-2 border-black' : 'text-zinc-400 hover:text-black'}`}
                     >
-                      境外仓 (Overseas)
+                      境外仓
                     </button>
                   </div>
                 </div>
@@ -679,15 +585,16 @@ export function ProductManagement() {
                 <div className="bg-white border border-zinc-200 shadow-sm">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-zinc-50 border-b border-zinc-200 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                        <th className="p-4 font-bold">规格 (尺码)</th>
-                        <th className="p-4 font-bold">所在仓库</th>
-                        <th className="p-4 font-bold">条码 (Barcode)</th>
-                        <th className="p-4 font-bold text-right">零售价</th>
-                        <th className="p-4 font-bold text-right">零售库存</th>
-                        <th className="p-4 font-bold text-right">供货价</th>
-                        <th className="p-4 font-bold text-right">供货库存</th>
-                      </tr>
+                        <tr className="bg-zinc-50 border-b border-zinc-200 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                          <th className="p-4 font-bold">规格 (尺码)</th>
+                          <th className="p-4 font-bold">所在仓库</th>
+                          <th className="p-4 font-bold">条码 (Barcode)</th>
+                          <th className="p-4 font-bold text-right bg-blue-50/30">大陆零售价 (CNY)</th>
+                          <th className="p-4 font-bold text-right bg-orange-50/30">香港零售价 (HKD)</th>
+                          <th className="p-4 font-bold text-right">零售库存</th>
+                          <th className="p-4 font-bold text-right">供货价</th>
+                          <th className="p-4 font-bold text-right">供货库存</th>
+                        </tr>
                     </thead>
                     <tbody className="text-sm">
                       {activeWarehouseTab === 'domestic' ? (
@@ -698,6 +605,7 @@ export function ProductManagement() {
                             <td className="p-4"><span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider">深圳保税仓</span></td>
                             <td className="p-4"><input type="text" defaultValue="5045621098711" className="w-full border border-zinc-200 px-2 py-1.5 text-xs font-mono focus:border-black focus:ring-0 outline-none" /></td>
                             <td className="p-4"><input type="number" defaultValue={3500} className="w-24 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>
+                            <td className="p-4"><input type="number" defaultValue={3800} className="w-24 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>
                             <td className="p-4"><input type="number" defaultValue={8} className="w-20 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>
                             <td className="p-4"><input type="number" defaultValue={3100} className="w-24 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>
                             <td className="p-4"><input type="number" defaultValue={5} className="w-20 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none text-blue-600" /></td>
@@ -708,6 +616,7 @@ export function ProductManagement() {
                             <td className="p-4"><span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider">深圳保税仓</span></td>
                             <td className="p-4"><input type="text" defaultValue="5045621098712" className="w-full border border-zinc-200 px-2 py-1.5 text-xs font-mono focus:border-black focus:ring-0 outline-none" /></td>
                             <td className="p-4"><input type="number" defaultValue={3500} className="w-24 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>
+                            <td className="p-4"><input type="number" defaultValue={3800} className="w-24 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>
                             <td className="p-4"><input type="number" defaultValue={12} className="w-20 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>
                             <td className="p-4"><input type="number" defaultValue={3100} className="w-24 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>
                             <td className="p-4"><input type="number" defaultValue={10} className="w-20 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none text-blue-600" /></td>
@@ -721,6 +630,12 @@ export function ProductManagement() {
                               <div className="flex items-center border border-zinc-200 bg-white px-2 py-1.5 w-28 ml-auto">
                                 <span className="text-xs text-zinc-400 mr-1">¥</span>
                                 <input type="number" defaultValue={3600} className="w-full text-xs font-bold outline-none text-right" />
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center border border-zinc-200 bg-zinc-50 px-2 py-1.5 w-28 ml-auto">
+                                <span className="text-xs text-zinc-400 mr-1">HK$</span>
+                                <input type="number" defaultValue={3900} className="w-full text-xs font-bold outline-none text-right" />
                               </div>
                             </td>
                             <td className="p-4"><input type="number" defaultValue={0} className="w-20 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none text-red-500" /></td>
@@ -743,10 +658,17 @@ export function ProductManagement() {
                             <td className="p-4">
                               <div className="flex flex-col items-end">
                                 <div className="flex items-center border border-zinc-200 bg-white px-2 py-1.5 w-28">
+                                  <span className="text-xs text-zinc-400 mr-1">¥</span>
+                                  <input type="number" defaultValue={3200} className="w-full text-xs font-bold outline-none text-right" />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-col items-end">
+                                <div className="flex items-center border border-zinc-200 bg-white px-2 py-1.5 w-28">
                                   <span className="text-xs text-zinc-400 mr-1">HK$</span>
                                   <input type="number" defaultValue={3450} className="w-full text-xs font-bold outline-none text-right" />
                                 </div>
-                                <div className="text-[10px] text-zinc-400 mt-1">约 ¥3,200</div>
                               </div>
                             </td>
                             <td className="p-4"><input type="number" defaultValue={25} className="w-20 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>
@@ -769,10 +691,17 @@ export function ProductManagement() {
                             <td className="p-4">
                               <div className="flex flex-col items-end">
                                 <div className="flex items-center border border-zinc-200 bg-white px-2 py-1.5 w-28">
+                                  <span className="text-xs text-zinc-400 mr-1">¥</span>
+                                  <input type="number" defaultValue={3200} className="w-full text-xs font-bold outline-none text-right" />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-col items-end">
+                                <div className="flex items-center border border-zinc-200 bg-white px-2 py-1.5 w-28">
                                   <span className="text-xs text-zinc-400 mr-1">HK$</span>
                                   <input type="number" defaultValue={3450} className="w-full text-xs font-bold outline-none text-right" />
                                 </div>
-                                <div className="text-[10px] text-zinc-400 mt-1">约 ¥3,200</div>
                               </div>
                             </td>
                             <td className="p-4"><input type="number" defaultValue={45} className="w-20 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>
@@ -795,10 +724,17 @@ export function ProductManagement() {
                             <td className="p-4">
                               <div className="flex flex-col items-end">
                                 <div className="flex items-center border border-zinc-200 bg-white px-2 py-1.5 w-28">
+                                  <span className="text-xs text-zinc-400 mr-1">¥</span>
+                                  <input type="number" defaultValue={2900} className="w-full text-xs font-bold outline-none text-right" />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-col items-end">
+                                <div className="flex items-center border border-zinc-200 bg-white px-2 py-1.5 w-28">
                                   <span className="text-xs text-zinc-400 mr-1">HK$</span>
                                   <input type="number" defaultValue={3100} className="w-full text-xs font-bold outline-none text-right" />
                                 </div>
-                                <div className="text-[10px] text-zinc-400 mt-1">约 ¥2,900</div>
                               </div>
                             </td>
                             <td className="p-4"><input type="number" defaultValue={80} className="w-20 ml-auto border border-zinc-200 px-2 py-1.5 text-xs font-bold text-right focus:border-black focus:ring-0 outline-none" /></td>

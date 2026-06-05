@@ -56,8 +56,8 @@ export function BatchApplyCommonProductModal({ isOpen, onClose, selectedIds, onS
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-200">
           <div>
-            <h2 className="text-lg font-black uppercase tracking-tight">批量申请新增至公共库</h2>
-            <p className="text-xs text-zinc-500 mt-1">自动带入原商品的基础信息（价格与库存除外），请确认后提交</p>
+            <h2 className="text-lg font-black uppercase tracking-tight">批量申请同步至公共库</h2>
+            <p className="text-xs text-zinc-500 mt-1">检测到高信用条码，系统将启动 <span className="text-emerald-600 font-bold">Fast-Track (秒批)</span> 模式，同步后直接生效</p>
           </div>
           <button onClick={onClose} className="text-zinc-400 hover:text-black transition-colors rounded-full p-2 hover:bg-zinc-100">
             <X size={20} />
@@ -70,7 +70,7 @@ export function BatchApplyCommonProductModal({ isOpen, onClose, selectedIds, onS
             <div className="space-y-4">
               <div className="bg-blue-50 text-blue-700 px-4 py-3 text-sm border border-blue-100 mb-6 flex items-start gap-2">
                 <span className="font-bold">提示：</span> 
-                <span>系统已自动为您带入品牌、类目、图片及规格信息。提交后将进入公共商品库审核队列。</span>
+                <span>系统已自动为您带入品牌及全局映射后的分类信息。提交后将进入公共库并自动同步出价。</span>
               </div>
 
               <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-white border border-zinc-200 text-[10px] font-bold text-zinc-500 uppercase tracking-widest shadow-sm">
@@ -104,17 +104,10 @@ export function BatchApplyCommonProductModal({ isOpen, onClose, selectedIds, onS
                     </div>
                   </div>
                   <div className="md:col-span-2 flex flex-col md:block w-full">
-                    <div className="md:hidden text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">分类</div>
-                    <select 
-                      defaultValue={product.category}
-                      className="text-sm border border-zinc-200 px-2 py-1.5 md:py-1 bg-white outline-none focus:border-black w-full"
-                    >
-                      <option value="腕表">腕表</option>
-                      <option value="箱包">箱包</option>
-                      <option value="服饰">服饰</option>
-                      <option value="珠宝">珠宝</option>
-                      <option value="美妆">美妆</option>
-                    </select>
+                    <div className="md:hidden text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">已映射分类</div>
+                    <div className="text-sm font-bold bg-zinc-100 px-2 py-1 border border-zinc-200 inline-block md:block text-center rounded-sm">
+                      {product.category}
+                    </div>
                   </div>
                   <div className="md:col-span-2 flex flex-col md:block w-full">
                     <div className="md:hidden text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1 mt-2">原 SPU 编码</div>

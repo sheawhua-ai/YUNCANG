@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, X, Plus, Trash2, Download, Upload, Wallet } from 'lucide-react';
+import { Search, X, Plus, Trash2, Download, Upload, Wallet, CheckCircle, FileText } from 'lucide-react';
 
 interface CartItem {
   id: string;
@@ -142,8 +142,8 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
       <div className="relative bg-white w-full max-w-5xl h-[85vh] shadow-2xl flex flex-col rounded-lg overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center px-8 py-6 border-b border-zinc-100 bg-zinc-50">
           <div>
-            <h2 className="text-xl font-black uppercase tracking-tight">管理员后台代下单</h2>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">PC Backend Admin Order Creation</p>
+            <h2 className="text-xl font-black uppercase tracking-tight">管理员代下单</h2>
+            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Admin Order Creation</p>
           </div>
           <button onClick={onClose} className="text-zinc-400 hover:text-black"><X size={24} /></button>
         </div>
@@ -154,21 +154,23 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
             <div className="p-6 border-b border-zinc-100">
               <div className="flex gap-4 mb-6">
                   <div className="flex-1">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">选择发货仓库 (按仓结算)</label>
-                    <select 
-                      value={selectedWarehouseId}
-                      onChange={(e) => {
-                        setSelectedWarehouseId(e.target.value);
-                        setCart([]); // Clear cart when warehouse changes to ensure single-warehouse order
-                      }}
-                      className="w-full py-3 px-4 bg-zinc-50 border border-zinc-200 focus:border-black outline-none font-bold text-sm appearance-none cursor-pointer"
-                    >
-                      {WAREHOUSES.map(w => (
-                        <option key={w.id} value={w.id}>
-                          {w.name} ({w.currency} / {w.symbol})
-                        </option>
-                      ))}
-                    </select>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">生成订单来源 (选择货单或导入)</label>
+                    <div className="flex gap-2">
+                       <button 
+                         className="flex-1 py-3 px-4 bg-black text-white border border-black flex items-center justify-center gap-2 text-xs font-bold transition-all"
+                         onClick={() => alert('展示已有货单列表供选择')}
+                       >
+                         <FileText size={16} />
+                         从已有货单中选择
+                       </button>
+                       <button 
+                         className="flex-1 py-3 px-4 bg-white text-zinc-600 border border-zinc-200 flex items-center justify-center gap-2 text-xs font-bold hover:border-black hover:text-black transition-all"
+                         onClick={() => alert('弹出文件上传，导入 Excel 货单')}
+                       >
+                         <Upload size={16} />
+                         导入 Excel 商品清单
+                       </button>
+                    </div>
                   </div>
               </div>
 
@@ -528,4 +530,3 @@ export function CreateOrderModal({ isOpen, onClose, onFinish }: { isOpen: boolea
   );
 }
 
-import { CheckCircle } from 'lucide-react';

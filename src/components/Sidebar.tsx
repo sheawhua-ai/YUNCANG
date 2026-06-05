@@ -25,7 +25,6 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, onClose }: SidebarPro
       items: [
         { id: 'self_product', label: '商品管理' },
         { id: 'offer_to_marketplace', label: '出价到集市' },
-        { id: 'marketplace_on_sale', label: '集市在售' },
         { id: 'self_order', label: '订单管理' },
       ]
     },

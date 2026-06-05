@@ -20,8 +20,11 @@ export function MarkupStrategy({ setActiveTab }: MarkupStrategyProps) {
   
   // Follow merchant preferences
   const [followMerchant1, setFollowMerchant1] = useState('1567');
+  const [followChannel1, setFollowChannel1] = useState('mainland');
   const [followMerchant2, setFollowMerchant2] = useState('');
+  const [followChannel2, setFollowChannel2] = useState('mainland');
   const [followMerchant3, setFollowMerchant3] = useState('');
+  const [followChannel3, setFollowChannel3] = useState('mainland');
 
   // Filter states
   const [filterSearch, setFilterSearch] = useState('');
@@ -50,11 +53,18 @@ export function MarkupStrategy({ setActiveTab }: MarkupStrategyProps) {
     { value: '1795', label: 'HANNAH (1795)' },
   ];
 
+  const channels = [
+    { value: 'auto', label: '智能对标 (大陆-大陆 / 香港-香港)' },
+    { value: 'mainland', label: '强对标: 大陆零售价' },
+    { value: 'hongkong', label: '强对标: 香港零售价' },
+    { value: 'europe', label: '强对标: 欧洲零售价' },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between md:items-end mb-6 md:mb-8 gap-4">
         <div>
-          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">Distributor Dashboard</div>
+          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">商家管理面板</div>
           <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase mb-2">选品与配置加价策略</h1>
           <p className="text-xs md:text-sm text-zinc-500">配置分销加价规则，并获取符合规则的商品至您的分销库</p>
         </div>
@@ -96,8 +106,11 @@ export function MarkupStrategy({ setActiveTab }: MarkupStrategyProps) {
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 mb-6">
           <div className="flex-1 bg-zinc-50 border border-zinc-200 p-4">
             <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">优先级 1</div>
-            <div className="text-sm font-bold">单品特例价格</div>
-            <div className="text-[10px] text-zinc-500 mt-1">在「我的选品」中为特定SPU设置的固定展现价。</div>
+            <div className="text-sm font-bold flex items-center justify-between">
+              <span>单品特例价格</span>
+              <span className="text-[9px] bg-blue-600 text-white px-1 py-0.5 rounded-sm">Highest</span>
+            </div>
+            <div className="text-[10px] text-zinc-500 mt-1">在「我的选品」或通过 Excel 批量设置的固定展现价。</div>
           </div>
           <div className="hidden md:flex items-center text-zinc-300">
             <ChevronRight size={20} />
@@ -118,45 +131,120 @@ export function MarkupStrategy({ setActiveTab }: MarkupStrategyProps) {
         </div>
 
         <div className="border-t border-zinc-100 pt-6">
-          <h3 className="text-xs font-bold mb-3">配置跟随商家顺序 (优先级递减)</h3>
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center">
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <span className="text-[10px] font-bold text-zinc-500 w-3">1.</span>
-              <SearchableCombobox
-                options={merchants}
-                value={followMerchant1}
-                onChange={setFollowMerchant1}
-                className="w-full md:w-48"
-              />
+          <h3 className="text-xs font-bold mb-3">配置跟随商家及价格渠道 (优先级递减)</h3>
+          <div className="flex flex-col gap-4">
+            {/* Slot 1 */}
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center bg-zinc-50/50 p-3 rounded-sm border border-zinc-100">
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <span className="text-[10px] font-bold text-zinc-600 w-6">1. 商家</span>
+                <SearchableCombobox
+                  options={merchants}
+                  value={followMerchant1}
+                  onChange={setFollowMerchant1}
+                  className="w-full md:w-48"
+                />
+              </div>
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <span className="text-[10px] font-bold text-zinc-600 w-12">对标渠道</span>
+                <select 
+                  value={followChannel1}
+                  onChange={(e) => setFollowChannel1(e.target.value)}
+                  className="h-[38px] w-full md:w-40 border border-zinc-200 bg-white px-3 text-xs font-bold outline-none focus:border-black"
+                >
+                  {channels.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
             </div>
-            <span className="text-zinc-300 hidden md:inline"><ChevronRight size={16} /></span>
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <span className="text-[10px] font-bold text-zinc-500 w-3">2.</span>
-              <SearchableCombobox
-                options={merchants}
-                value={followMerchant2}
-                onChange={setFollowMerchant2}
-                className="w-full md:w-48"
-              />
+
+            {/* Slot 2 */}
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center bg-zinc-50/50 p-3 rounded-sm border border-zinc-100">
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <span className="text-[10px] font-bold text-zinc-600 w-6">2. 商家</span>
+                <SearchableCombobox
+                  options={merchants}
+                  value={followMerchant2}
+                  onChange={setFollowMerchant2}
+                  className="w-full md:w-48"
+                />
+              </div>
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <span className="text-[10px] font-bold text-zinc-600 w-12">对标渠道</span>
+                <select 
+                  value={followChannel2}
+                  onChange={(e) => setFollowChannel2(e.target.value)}
+                  className="h-[38px] w-full md:w-40 border border-zinc-200 bg-white px-3 text-xs font-bold outline-none focus:border-black"
+                >
+                  {channels.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
             </div>
-            <span className="text-zinc-300 hidden md:inline"><ChevronRight size={16} /></span>
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <span className="text-[10px] font-bold text-zinc-500 w-3">3.</span>
-              <SearchableCombobox
-                options={merchants}
-                value={followMerchant3}
-                onChange={setFollowMerchant3}
-                className="w-full md:w-48"
-              />
-            </div>
-            <div className="flex-1 hidden md:block">
-              <button className="bg-black text-white px-4 py-2 text-xs font-bold hover:bg-zinc-800 transition-colors h-[38px] w-full md:w-auto">保存排序</button>
+
+            {/* Slot 3 */}
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center bg-zinc-50/50 p-3 rounded-sm border border-zinc-100">
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <span className="text-[10px] font-bold text-zinc-600 w-6">3. 商家</span>
+                <SearchableCombobox
+                  options={merchants}
+                  value={followMerchant3}
+                  onChange={setFollowMerchant3}
+                  className="w-full md:w-48"
+                />
+              </div>
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <span className="text-[10px] font-bold text-zinc-600 w-12">对标渠道</span>
+                <select 
+                  value={followChannel3}
+                  onChange={(e) => setFollowChannel3(e.target.value)}
+                  className="h-[38px] w-full md:w-40 border border-zinc-200 bg-white px-3 text-xs font-bold outline-none focus:border-black"
+                >
+                  {channels.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+              <div className="flex-1 text-right mt-2 md:mt-0">
+                <button className="bg-black text-white px-8 py-2 text-xs font-bold hover:bg-zinc-800 transition-colors h-[38px] w-full md:w-auto">保存并应用</button>
+              </div>
             </div>
           </div>
-          <button className="md:hidden mt-4 bg-black text-white px-4 py-2 text-xs font-bold hover:bg-zinc-800 transition-colors w-full">保存排序</button>
           
-          <div className="text-[10px] text-zinc-500 mt-4 leading-relaxed bg-zinc-50 p-3">
-            <span className="font-bold">计价逻辑说明：</span> 在前端展现商品价格时，系统将依序检查上述选择的商家是否在同一SKU上提供了<span className="text-black font-bold">「零售指导价」</span>。如果优先级1的商家有配置零售价，则直接采用该金额作为分销最终价；否则继续检查优先级2，依此类推。若选择的商家均无零售价，则进入优先级3，使用下方的加价规则和尾数策略进行计算。
+          <div className="text-[10px] text-zinc-500 mt-4 leading-relaxed bg-zinc-50 p-3 border-l-2 border-zinc-300">
+            <span className="font-bold">计价逻辑说明：</span> 
+            在前端展现商品价格时，系统将依序检查上述选择的商家是否在指定的价格渠道（如：大陆、香港）上提供了<span className="text-black font-bold">「零售指导价」</span>。
+            <br />
+            <span className="text-blue-600 font-bold">仓库-渠道自动映射：</span> 系统会将您的 SKU 所在仓库属性自动映射到对标商家的价格渠道。例如：位于「香港仓」的 SKU 将自动抓取对标商家的「香港零售价」进行跟随，无需逐个设置。
+          </div>
+        </div>
+      </div>
+
+      {/* Special Price Management Section */}
+      <div className="mb-8 p-6 bg-white border border-zinc-200 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-widest">单品特例价/特殊规则清单</h3>
+            <p className="text-[10px] text-zinc-500 mt-1">当全局加价和商家跟随都不满足时，通过 Excel 或手动覆盖的价格项</p>
+          </div>
+          <div className="flex gap-2">
+             <button className="bg-zinc-50 text-zinc-600 px-4 py-2 text-xs font-bold border border-zinc-200 hover:bg-zinc-100 transition-colors">导出清单</button>
+             <button className="bg-zinc-50 text-red-600 px-4 py-2 text-xs font-bold border border-red-100 hover:bg-red-50 transition-colors">批量重置</button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-zinc-50 p-4 border border-zinc-100">
+            <div className="text-[10px] font-bold text-zinc-400 uppercase mb-1">正在生效特例</div>
+            <div className="text-2xl font-black">128 <span className="text-xs text-zinc-400 font-normal">项</span></div>
+          </div>
+          <div className="bg-zinc-50 p-4 border border-zinc-100">
+            <div className="text-[10px] font-bold text-zinc-400 uppercase mb-1">价格锁定中</div>
+            <div className="text-2xl font-black">42 <span className="text-xs text-zinc-400 font-normal">项</span></div>
+          </div>
+          <div className="bg-zinc-50 p-4 border border-zinc-100">
+            <div className="text-[10px] font-bold text-zinc-400 uppercase mb-1">异常预警 (亏损风险)</div>
+            <div className="text-2xl font-black text-red-500">3 <span className="text-xs text-zinc-400 font-normal">项</span></div>
+          </div>
+          <div className="flex items-center justify-center border-2 border-dashed border-zinc-200 group hover:border-zinc-400 cursor-pointer transition-colors">
+            <div className="text-xs font-bold text-zinc-400 group-hover:text-zinc-600 transition-colors flex items-center gap-2">
+              <Plus size={14} /> 查看全部特例
+            </div>
           </div>
         </div>
       </div>
