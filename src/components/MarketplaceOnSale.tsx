@@ -88,7 +88,6 @@ export function MarketplaceOnSale() {
     <div className="max-w-7xl mx-auto">
       <div className="flex justify-between md:items-end mb-6 md:mb-8 gap-4">
         <div>
-          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">Supplier Dashboard</div>
           <h1 className="text-3xl font-black tracking-tighter uppercase mb-2">集市在售</h1>
           <p className="text-sm text-zinc-500">管理您已发布到集市的现货商品</p>
         </div>

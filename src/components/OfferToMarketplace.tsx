@@ -78,16 +78,18 @@ export function OfferToMarketplace({ setActiveTab }: OfferToMarketplaceProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 mb-8">
-        <div className="bg-zinc-900 text-white p-6 rounded-sm">
-          <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">待匹配资产</div>
-          <div className="text-4xl font-black mb-2">{incrementalCount} <span className="text-xs text-zinc-500 uppercase">items</span></div>
-          <p className="text-[10px] text-zinc-400 leading-relaxed">系统探测到新增资产，点击下方按钮开始增量对标。</p>
+      <div className="mb-8">
+        <div className="bg-zinc-900 text-white p-8 rounded-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex-1">
+            <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">增量同步资产池</div>
+            <div className="text-5xl font-black mb-2 tracking-tighter">{incrementalCount} <span className="text-xs text-zinc-500 uppercase font-bold">items detected</span></div>
+            <p className="text-xs text-zinc-400 leading-relaxed max-w-xl">系统已实时探测到仓库中存在新增资产。点击启动 AI 匹配引擎，系统将自动针对全球集市进行规格对标、库存同步及动态加价策略应用。</p>
+          </div>
           <button 
             onClick={handleIncrementalMatch}
-            className="mt-6 bg-white text-black px-8 py-2 text-xs font-bold hover:bg-zinc-100 transition-colors"
+            className="w-full md:w-auto bg-white text-black px-12 py-4 text-sm font-black hover:bg-zinc-100 transition-all active:scale-95 shadow-lg shadow-white/5 uppercase tracking-widest shrink-0"
           >
-            {isAutoMatching ? '正在计算...' : '启动增量对标'}
+            {isAutoMatching ? '正在执行 AI 对标与同步...' : '立即同步至集市'}
           </button>
         </div>
       </div>

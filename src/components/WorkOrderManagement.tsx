@@ -38,7 +38,6 @@ export function WorkOrderManagement() {
     <div className="max-w-7xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row justify-between md:items-end mb-8 gap-4">
         <div>
-          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">Internal Adjustments</div>
           <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase mb-2">工单管理</h1>
           <p className="text-xs md:text-sm text-zinc-500">处理金额调整（增加/减少定金、尾款），需经过财务审核生效</p>
         </div>

@@ -349,7 +349,6 @@ export function ManifestOrderManagement() {
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col md:flex-row justify-between md:items-end mb-6 md:mb-8 gap-4">
           <div>
-            <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">Manifest Orders</div>
             <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase mb-2">PC 货单订单管理</h1>
             <p className="text-xs md:text-sm text-zinc-500">支持 PC 后端代下单（定金付款）、Excel 批量回传确认订单</p>
           </div>

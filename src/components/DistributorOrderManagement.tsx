@@ -1,4 +1,4 @@
-import { Search, ChevronRight, X, FileText, Truck, Wrench } from "lucide-react";
+import { Search, ChevronRight, X, FileText, Truck, Wrench, CheckCircle, Check } from "lucide-react";
 import { useState } from "react";
 import { workOrderStore } from '../lib/workOrderStore';
 
@@ -73,10 +73,10 @@ const INITIAL_ORDERS = [
     id: 'DIST-2024-0813-C3', type: 'distribution', date: '2024-08-13 09:10', brand: 'Prada', productName: 'Prada Cleo', spuCount: 1, itemCount: 1,
     buyerName: '赵六', buyerPhone: '139****5678', buyerType: 'C端买家', deliveryMethod: '快递发货', warehouse: '香港直邮仓', 
     shippingMode: 'transit', supplierName: '欧洲表行', distributorName: '时尚优选C', shippingAddress: '上海市浦东新区...',
-    totalPrice: 15200, totalCostPrice: 14000, status: 'pending_refund', statusLabel: '待退款',
+    totalPrice: 15200, totalCostPrice: 14000, status: 'after_sales', statusLabel: '售后处理',
     paymentType: 'full', paidAmount: 15200,
     image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=100&q=80',
-    items: [{ id: 'item-6', name: 'Prada Cleo', sku: 'P-CLEO-WHT', supplier: '欧洲表行', count: 1, price: 15200, status: 'pending_refund', statusLabel: '待退款' }],
+    items: [{ id: 'item-6', name: 'Prada Cleo', sku: 'P-CLEO-WHT', supplier: '欧洲表行', count: 1, price: 15200, status: 'after_sales', statusLabel: '售后处理' }],
     progress: [
       { id: 'p1', time: '2024-08-13 09:15', description: '买家付款成功', items: '全部 (1件)', amountChange: '+¥15,200' },
       { id: 'p2', time: '2024-08-13 11:00', description: '供货商确认缺货', items: 'Prada Cleo', amountChange: '产生退款 ¥15,200' }
@@ -109,7 +109,9 @@ const INITIAL_ORDERS = [
 export function DistributorOrderManagement() {
   const [orders, setOrders] = useState(INITIAL_ORDERS);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [filterSupplier, setFilterSupplier] = useState<string | null>(null);
   const [filterBuyer, setFilterBuyer] = useState<string | null>(null);
   const [filterDistributor, setFilterDistributor] = useState<string | null>(null);
@@ -207,6 +209,12 @@ export function DistributorOrderManagement() {
     alert('已成功发起财务工单');
   };
 
+  const getCurrencySymbol = (warehouseName?: string) => {
+    if (warehouseName?.includes('香港')) return 'HK$';
+    if (warehouseName?.includes('欧洲') || warehouseName?.includes('Europe')) return '€';
+    return '¥';
+  };
+
   const filteredOrders = orders.filter(order => {
     let matchesTab = false;
     if (activeTab === 'all') {
@@ -231,9 +239,19 @@ export function DistributorOrderManagement() {
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col md:flex-row justify-between md:items-end mb-6 md:mb-8 gap-4">
           <div>
-            <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">Distributor Orders</div>
             <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase mb-2">分销订单管理</h1>
-            <p className="text-xs md:text-sm text-zinc-500">管理您的分销订单，查看上游供货商发货状态</p>
+          </div>
+          <div className="flex gap-4 w-full md:w-auto">
+            <button 
+              disabled={selectedOrderIds.length === 0}
+              className={`w-full md:w-auto text-xs font-bold uppercase tracking-widest px-8 py-3 transition-colors shadow-lg shadow-black/10 ${
+                selectedOrderIds.length > 0 
+                  ? 'bg-black text-white hover:bg-zinc-800 cursor-pointer' 
+                  : 'bg-zinc-200 text-zinc-400 cursor-not-allowed shadow-none'
+              }`}
+            >
+              导出选中分销订单
+            </button>
           </div>
         </div>
 
@@ -241,26 +259,18 @@ export function DistributorOrderManagement() {
           <button onClick={() => setActiveTab('all')} className={`pb-3 text-xs font-bold transition-colors ${activeTab === 'all' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>全部订单</button>
           <button onClick={() => setActiveTab('pending_payment')} className={`pb-3 text-xs font-bold transition-colors ${activeTab === 'pending_payment' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>待付款</button>
           <button onClick={() => setActiveTab('pending_confirmation')} className={`pb-3 text-xs font-bold transition-colors ${activeTab === 'pending_confirmation' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>待供货商确认</button>
-          <button onClick={() => setActiveTab('pending_shipment')} className={`pb-3 text-xs font-bold transition-colors ${activeTab === 'pending_shipment' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>待发货</button>
           <button onClick={() => setActiveTab('supplier_shipped')} className={`pb-3 text-xs font-bold transition-colors flex items-center gap-1 ${activeTab === 'supplier_shipped' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-zinc-500 hover:text-black'}`}>
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-            上游已发货
+            供应商已发货
           </button>
+          <button onClick={() => setActiveTab('pending_shipment')} className={`pb-3 text-xs font-bold transition-colors ${activeTab === 'pending_shipment' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>待发货</button>
           <button onClick={() => setActiveTab('shipped')} className={`pb-3 text-xs font-bold transition-colors ${activeTab === 'shipped' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>已发货</button>
-          <button onClick={() => setActiveTab('pending_refund')} className={`pb-3 text-xs font-bold transition-colors ${activeTab === 'pending_refund' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>待退款</button>
+          <button onClick={() => setActiveTab('after_sales')} className={`pb-3 text-xs font-bold transition-colors ${activeTab === 'after_sales' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>售后处理</button>
+          <button onClick={() => setActiveTab('completed')} className={`pb-3 text-xs font-bold transition-colors ${activeTab === 'completed' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>已完成</button>
+          <button onClick={() => setActiveTab('closed')} className={`pb-3 text-xs font-bold transition-colors ${activeTab === 'closed' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>已关闭</button>
         </div>
 
         <div className="flex flex-col gap-4 mb-6">
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex-1 min-w-[200px] relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-              <input 
-                type="text" 
-                placeholder="搜索订单号、买家、商品名称..." 
-                className="w-full border border-zinc-200 pl-10 pr-4 py-2 text-sm focus:border-black focus:ring-0 outline-none" 
-              />
-            </div>
-          </div>
           {(filterSupplier || filterBuyer || filterDistributor) && (
             <div className="flex items-center gap-2 text-xs">
               <span className="text-zinc-500 font-bold">当前筛选:</span>
@@ -276,7 +286,7 @@ export function DistributorOrderManagement() {
               )}
               {filterDistributor && (
                 <span className="bg-zinc-200 text-zinc-800 px-2 py-1 flex items-center gap-1">
-                  分销商: {filterDistributor} <X size={12} className="cursor-pointer hover:text-black" onClick={() => setFilterDistributor(null)} />
+                  主理人: {filterDistributor} <X size={12} className="cursor-pointer hover:text-black" onClick={() => setFilterDistributor(null)} />
                 </span>
               )}
               <button onClick={() => { setFilterSupplier(null); setFilterBuyer(null); setFilterDistributor(null); }} className="text-zinc-500 hover:text-black hover:underline ml-2">清除全部</button>
@@ -285,136 +295,167 @@ export function DistributorOrderManagement() {
         </div>
 
         <div className="bg-white border border-zinc-200 shadow-sm">
-          <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-zinc-200 bg-zinc-50 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-            <div className="col-span-3">商品详情</div>
-            <div className="col-span-2">买家信息</div>
-            <div className="col-span-2">上游供货商</div>
-            <div className="col-span-2 text-right">总价</div>
-            <div className="col-span-2 pl-4">状态</div>
-            <div className="col-span-1 text-right">操作</div>
+          <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-zinc-200 bg-zinc-50 text-[10px] font-bold text-zinc-500 uppercase tracking-widest items-center">
+            <div className="col-span-3">商品明细 (名称/货号)</div>
+            <div className="col-span-3">收件信息</div>
+            <div className="col-span-1 text-center">供货商 / 履约方式</div>
+            <div className="col-span-1 text-right">结算金额</div>
+            <div className="col-span-1 text-center">状态</div>
+            <div className="col-span-3 text-right">快捷操作</div>
           </div>
 
           {filteredOrders.map(order => (
-            <div key={order.id} className="border-b border-zinc-200 hover:border-black transition-colors bg-white mb-4 shadow-sm">
-              <div className="bg-zinc-50 px-4 md:px-6 py-3 border-b border-zinc-200 flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-                <span className="font-bold text-xs">{order.id}</span>
-                <span className="text-[10px] text-zinc-500">{order.date}</span>
+            <div key={order.id} className={`border-b border-zinc-200 hover:border-black transition-colors bg-white mb-4 shadow-sm relative ${selectedOrderIds.includes(order.id) ? 'bg-zinc-50/50 border-l-4 border-l-black' : ''}`}>
+              {/* Order Header */}
+              <div className="bg-zinc-50 px-4 md:px-6 py-3 border-b border-zinc-200 flex flex-wrap items-center gap-2 md:gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <input 
+                    type="checkbox" 
+                    className="accent-black h-4 w-4"
+                    checked={selectedOrderIds.includes(order.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedOrderIds([...selectedOrderIds, order.id]);
+                      else setSelectedOrderIds(selectedOrderIds.filter(id => id !== order.id));
+                    }}
+                  />
+                  <div className="flex items-baseline gap-2 flex-col md:flex-row">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-0.5">订单编号 / 主单ID</span>
+                      <span className="font-bold text-xs font-mono tracking-tighter break-all max-w-[200px] leading-tight flex flex-wrap">
+                        {order.id.split('').map((char, i) => <span key={i}>{char}</span>)}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-zinc-400 font-mono mt-1 md:mt-0">{order.date}</span>
+                  </div>
+                </div>
                 {order.distributorName && (
                   <span 
                     className="text-[10px] text-blue-600 md:ml-4 cursor-pointer hover:underline"
                     onClick={() => setFilterDistributor(order.distributorName!)}
                   >
-                    分销商: {order.distributorName}
+                    主理人: {order.distributorName} (ID: {order.id.slice(-4)})
                   </span>
                 )}
               </div>
+              {/* Order Body */}
               <div className="flex flex-col md:grid md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 md:items-center">
-                <div className="md:col-span-3 md:pr-4">
-                  <div className="flex gap-3 mb-2 md:mb-0">
-                    <div className="w-16 h-16 md:w-10 md:h-10 bg-zinc-100 p-1 flex-shrink-0">
-                      <img src={order.image} alt={order.brand} className="w-full h-full object-contain mix-blend-multiply grayscale" />
-                    </div>
-                    <div>
-                      <div className="text-sm md:text-xs font-bold uppercase tracking-tight md:truncate md:w-32">{order.productName}</div>
-                      <div className="text-[10px] text-zinc-500">x {order.itemCount}</div>
+                <div className="md:col-span-3">
+                  <div className="flex gap-4 items-start">
+                    <img 
+                      src={order.image} 
+                      className="w-14 h-14 object-cover rounded-sm border border-zinc-100"
+                      alt={order.brand}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-black truncate mb-1 leading-tight">{order.productName}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-[10px] font-mono bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-500">#{order.items?.[0]?.sku || '无'}</div>
+                        <div className="text-[10px] text-zinc-400 font-bold tracking-tighter">x {order.itemCount}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-between md:contents">
-                  <div className="text-xs text-zinc-500 md:hidden ml-16 md:ml-0 md:pl-0">买家信息</div>
-                  <div className="md:col-span-2 md:pr-4 text-right md:text-left">
-                    <div 
-                      className="text-xs font-bold mb-1 text-blue-600 cursor-pointer hover:underline"
-                      onClick={() => setFilterBuyer(order.buyerName)}
-                    >
-                      {order.buyerName}
+                <div className="flex flex-col md:contents gap-4 border-t border-zinc-100 pt-4 md:border-none md:pt-0">
+                  <div className="md:col-span-3 md:pr-4">
+                    <div className="text-xs text-zinc-500 md:hidden mb-1 font-bold italic">收件信息</div>
+                    <div className="text-xs font-bold mb-1">{order.buyerName} ({order.buyerPhone})</div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="text-[10px] text-zinc-500 truncate" title={order.shippingAddress}>{order.shippingAddress}</div>
+                      {order.status === 'pending_shipment' && (
+                        <button onClick={(e) => { e.stopPropagation(); alert('修改地址功能开发中'); }} className="text-[9px] text-blue-600 hover:underline shrink-0">修改地址</button>
+                      )}
                     </div>
-                    <div className="text-[10px] text-zinc-500 truncate w-32 md:w-auto ml-auto md:ml-0" title={order.shippingAddress}>{order.shippingAddress}</div>
                   </div>
-                </div>
-                <div className="flex justify-between md:contents">
-                  <div className="text-xs text-zinc-500 md:hidden ml-16 md:ml-0 md:pl-0">上游供货商</div>
-                  <div className="md:col-span-2 md:pr-4 text-right md:text-left">
+                  <div className="md:col-span-1 text-center">
+                    <div className="text-xs text-zinc-500 md:hidden mb-1 font-bold italic">供货商/履约方式</div>
                     <div 
-                      className="text-xs font-bold mb-1 text-blue-600 cursor-pointer hover:underline"
+                      className="text-[10px] font-bold mb-1 text-blue-600 cursor-pointer hover:underline"
                       onClick={() => setFilterSupplier(order.supplierName)}
                     >
                       {order.supplierName}
                     </div>
-                    <div className="text-[10px] text-zinc-500">{order.shippingMode === 'dropship' ? '代发' : '发往中转仓'}</div>
+                    <div className="text-[10px] text-zinc-500">
+                      {order.shippingMode === 'dropship' ? '代发' : '发往中转仓'}
+                    </div>
+                    {order.shipments?.[0] && (
+                      <div className="text-[9px] font-mono text-zinc-500 tracking-tighter bg-zinc-100 px-1 inline-block rounded mb-1 mt-1 transition-all">
+                        {order.shipments[0].trackingNumber}
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="flex justify-between md:contents">
-                  <div className="text-xs text-zinc-500 md:hidden ml-16 md:ml-0 md:pl-0">总价</div>
-                  <div className="md:col-span-2 text-right">
-                    <div className="text-sm font-bold mb-1">¥ {order.totalPrice.toLocaleString()}</div>
+                  <div className="md:col-span-1 text-right">
+                    <div className="text-xs text-zinc-500 md:hidden mb-1 font-bold italic">结算金额</div>
+                    <div className="text-base font-black tracking-tighter">
+                      <span className="text-[10px] mr-1 text-zinc-400 font-normal">{getCurrencySymbol(order.warehouse)}</span>
+                      {order.totalPrice.toLocaleString()}
+                    </div>
                   </div>
-                </div>
-                <div className="flex justify-between md:contents">
-                  <div className="text-xs text-zinc-500 md:hidden ml-16 md:ml-0 md:pl-0">状态</div>
-                  <div className="md:col-span-2 md:pl-4 text-right md:text-left">
+                  <div className="md:col-span-1 text-center">
+                    <div className="text-xs text-zinc-500 md:hidden mb-1 font-bold italic">状态</div>
                     <div className={`text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block mb-1 ${
-                      order.status === 'pending_payment' ? 'bg-red-100 text-red-800' :
-                      order.status === 'pending_confirmation' ? 'bg-orange-100 text-orange-800' :
-                      order.status === 'pending_shipment' ? 'bg-black text-white' :
-                      order.status === 'supplier_shipped' ? 'bg-blue-100 text-blue-800' :
-                      order.status === 'pending_refund' ? 'bg-red-100 text-red-800' :
-                      'bg-zinc-100 text-zinc-800'
+                      order.status === 'pending_payment' ? 'bg-red-50 text-red-700 border border-red-100' :
+                      order.status === 'pending_confirmation' ? 'bg-orange-50 text-orange-700 border border-orange-100' :
+                      order.status === 'pending_shipment' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                      order.status === 'supplier_shipped' ? 'bg-cyan-50 text-cyan-700 border border-cyan-100' :
+                      order.status === 'after_sales' ? 'bg-purple-50 text-purple-700 border border-purple-100' :
+                      order.status === 'completed' ? 'bg-green-50 text-green-700 border border-green-100' :
+                      'bg-zinc-50 text-zinc-700 border border-zinc-200'
                     }`}>
                       {order.statusLabel}
                     </div>
-                    {(order as any).shipments && (order as any).shipments.length > 0 && (
-                      <div className="mt-2 space-y-2 text-left">
-                       {(() => {
-                         const upstream = (order as any).shipments.filter((s:any) => s.type === 'upstream');
-                         const downstream = (order as any).shipments.filter((s:any) => s.type === 'downstream');
-                         return (
-                           <>
-                             {upstream.length > 0 && (
-                               <div className="text-[10px] text-zinc-500 bg-blue-50/50 p-1.5 rounded-sm">
-                                 <div className="font-bold text-blue-600/70 mb-1 flex items-center gap-1"><Truck size={10} /> 上游发货物流:</div>
-                                 <div className="space-y-1">
-                                   {upstream.map((s:any) => (
-                                     <div key={s.id}>
-                                       <span className="text-zinc-800">{s.company}</span>
-                                       <a href="#" onClick={(e) => { e.preventDefault(); alert(`查看物流轨迹\r\n\r\n单号: ${s.trackingNumber}\r\n状态: 运输中...\r\n包裹内容: ${s.contents}`); }} className="text-blue-600 hover:underline ml-1">
-                                         {s.trackingNumber}
-                                       </a>
-                                     </div>
-                                   ))}
-                                 </div>
-                               </div>
-                             )}
-                             {downstream.length > 0 && (
-                               <div className="text-[10px] text-zinc-500 bg-green-50/50 p-1.5 rounded-sm">
-                                 <div className="font-bold text-green-600/80 mb-1 flex items-center gap-1"><Truck size={10} /> 发往买家物流:</div>
-                                 <div className="space-y-1">
-                                   {downstream.map((s:any) => (
-                                     <div key={s.id}>
-                                       <span className="text-zinc-800">{s.company}</span>
-                                       <a href="#" onClick={(e) => { e.preventDefault(); alert(`查看物流轨迹\r\n\r\n单号: ${s.trackingNumber}\r\n状态: 运输中...\r\n包裹内容: ${s.contents}`); }} className="text-blue-600 hover:underline ml-1">
-                                         {s.trackingNumber}
-                                       </a>
-                                     </div>
-                                   ))}
-                                 </div>
-                               </div>
-                             )}
-                           </>
-                         )
-                       })()}
-                    </div>
-                  )}
                   </div>
-                </div>
-                <div className="md:col-span-1 text-right mt-4 md:mt-0 ml-16 md:ml-0 md:pl-0 flex justify-end">
-                  <button 
-                    onClick={() => setSelectedOrder(order.id)}
-                    className="w-full md:w-8 h-8 border border-zinc-200 inline-flex items-center justify-center hover:border-black transition-colors"
-                  >
-                    <span className="md:hidden text-xs font-bold mr-2">查看详情</span>
-                    <ChevronRight size={16} />
-                  </button>
+                  <div className="md:col-span-3 flex flex-wrap gap-2 md:justify-end items-center mt-4 md:mt-0">
+                    {order.status === 'pending_payment' && (
+                      <>
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order.id); alert('关闭订单功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">关闭</button>
+                        <button onClick={(e) => { e.stopPropagation(); alert('改价功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">改价</button>
+                      </>
+                    )}
+                    {order.status === 'pending_confirmation' && (
+                      <>
+                        <button onClick={(e) => { e.stopPropagation(); alert('确认功能开发中'); }} className="text-[10px] font-bold bg-black text-white px-3 py-1.5 hover:bg-zinc-800 transition-colors shadow-sm">确认</button>
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order.id); alert('退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">退款</button>
+                      </>
+                    )}
+                    {order.status === 'pending_shipment' && (
+                      <>
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order.id); alert('发货管理功能开发中'); }} className="text-[10px] font-bold bg-black text-white px-3 py-1.5 hover:bg-zinc-800 transition-colors shadow-sm">发货</button>
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order.id); alert('退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">退款</button>
+                        <button onClick={(e) => { e.stopPropagation(); alert('此功能将取消订单的已确认状态并退回上一步'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white text-orange-600 hover:border-orange-600 hover:bg-orange-50 transition-colors">取消确认</button>
+                      </>
+                    )}
+                    {(order.status === 'shipped' || order.status === 'delivering' || order.status === 'ready_for_pickup') && (
+                      <>
+                        <button onClick={(e) => { e.stopPropagation(); alert('订单完结功能开发中'); }} className="text-[10px] font-bold bg-black text-white px-3 py-1.5 hover:bg-zinc-800 transition-colors shadow-sm">订单完结</button>
+                        <button onClick={(e) => { e.stopPropagation(); alert('仅退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">仅退款</button>
+                        <button onClick={(e) => { e.stopPropagation(); alert('退货退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">退货退款</button>
+                      </>
+                    )}
+                    {order.status === 'after_sales' && (
+                      <>
+                        <button onClick={(e) => { e.stopPropagation(); alert('订单完结功能开发中'); }} className="text-[10px] font-bold bg-black text-white px-3 py-1.5 hover:bg-zinc-800 transition-colors shadow-sm">订单完结</button>
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order.id); alert('退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">退款</button>
+                      </>
+                    )}
+                    {order.status === 'completed' && (
+                      <>
+                        <button onClick={(e) => { e.stopPropagation(); alert('退货退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">退货退款</button>
+                        <button onClick={(e) => { e.stopPropagation(); alert('仅退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">仅退款</button>
+                      </>
+                    )}
+                    <button 
+                      onClick={() => setSelectedOrder(order.id)}
+                      className="hidden md:flex w-8 h-8 border border-zinc-200 items-center justify-center hover:border-black transition-colors bg-white"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                    <button 
+                      onClick={() => setSelectedOrder(order.id)}
+                      className="md:hidden w-full h-8 border border-zinc-200 flex items-center justify-center hover:border-black transition-colors bg-white text-xs font-bold"
+                    >
+                      查看详情 <ChevronRight size={14} className="ml-1" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -426,10 +467,18 @@ export function DistributorOrderManagement() {
         <div className="fixed inset-0 z-50 flex justify-end md:p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedOrder(null)}></div>
           <div className="relative w-full md:w-[800px] bg-white shadow-2xl flex flex-col h-full md:rounded-xl overflow-hidden animate-in slide-in-from-right duration-300">
-            <div className="flex items-center justify-between px-4 md:px-8 py-4 md:py-6 border-b border-zinc-100 bg-zinc-50">
+            <div className="flex-start justify-between px-8 py-6 border-b border-zinc-100 bg-zinc-50 flex items-center">
               <div>
-                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">订单详情</div>
-                <h2 className="text-lg md:text-xl font-black uppercase tracking-tight">{selectedOrderData.id}</h2>
+                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">主单 ID / 订单详情</div>
+                <div className="flex items-center gap-4">
+                  <h2 className="text-xl font-black uppercase tracking-tight font-mono">{selectedOrderData.id}</h2>
+                  {selectedOrderData.distributorName && (
+                    <div className="bg-white border border-zinc-200 px-3 py-1 flex items-center gap-2 rounded-full shadow-sm">
+                      <span className="text-[10px] tracking-widest text-zinc-400 uppercase font-bold">对应主理人</span>
+                      <span className="text-xs font-black">{selectedOrderData.distributorName}</span>
+                    </div>
+                  )}
+                </div>
               </div>
               <button 
                 onClick={() => {
@@ -441,336 +490,354 @@ export function DistributorOrderManagement() {
             </div>
           
             <div className="flex-1 overflow-y-auto p-4 md:p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-6 md:mb-8">
-                <div>
-                  <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">买家/收件信息</h3>
-                  <div className="text-sm font-bold mb-1">{selectedOrderData.buyerName} ({selectedOrderData.buyerPhone})</div>
-                  <div className="text-xs text-zinc-500 mb-2">收货地址: {selectedOrderData.shippingAddress}</div>
-                  <div className="text-xs text-zinc-500 mt-2 p-2 bg-orange-50 border border-orange-100 rounded-sm">
-                    <span className="font-bold text-orange-800">上游货主:</span> {selectedOrderData.supplierName}
-                    <br/>
-                    <span className="text-[10px] text-orange-600">发货模式: {selectedOrderData.shippingMode === 'transit' ? '发往我的中转仓' : '由上游直接代发'}</span>
-                  </div>
+              {/* Order Info Bar - Neatly aligned pairs */}
+              <div className="grid grid-cols-2 gap-px bg-zinc-200 border border-zinc-200 rounded-lg overflow-hidden mb-6 shadow-sm">
+                <div className="bg-white p-4 flex justify-between items-center transition-colors hover:bg-zinc-50">
+                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">子单 ID</div>
+                  <div className="text-xs font-mono font-bold select-all text-blue-600">{selectedOrderData.id}</div>
                 </div>
-                <div>
-                  <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">订单状态</h3>
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className={`text-[10px] font-bold px-2 py-1 uppercase tracking-wider ${
-                      selectedOrderData.status === 'pending_payment' ? 'bg-red-100 text-red-800' :
-                      selectedOrderData.status === 'pending_confirmation' ? 'bg-orange-100 text-orange-800' :
-                      selectedOrderData.status === 'pending_shipment' ? 'bg-black text-white' :
-                      selectedOrderData.status === 'supplier_shipped' ? 'bg-blue-100 text-blue-800' :
-                      selectedOrderData.status === 'pending_refund' ? 'bg-red-100 text-red-800' :
-                      'bg-zinc-100 text-zinc-800'
-                    }`}>{selectedOrderData.statusLabel}</span>
-                    <span className="text-[10px] font-bold px-2 py-1 uppercase tracking-wider bg-orange-100 text-orange-800">分销订单</span>
-                  </div>
-                  <div className="text-xs text-zinc-500">下单时间: {selectedOrderData.date}:00</div>
+                <div className="bg-white p-4 flex justify-between items-center transition-colors hover:bg-zinc-50">
+                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">下单时间</div>
+                  <div className="text-xs font-mono text-zinc-800">{selectedOrderData.date}</div>
+                </div>
+                <div className="bg-white p-4 flex justify-between items-center transition-colors hover:bg-zinc-50">
+                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">主单 ID</div>
+                  <div className="text-xs font-mono font-bold text-zinc-700 select-all">{ "15744202606120931289179439" }</div>
+                </div>
+                <div className="bg-white p-4 flex justify-between items-center transition-colors hover:bg-zinc-50">
+                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">支付时间</div>
+                  <div className="text-xs font-mono text-zinc-800">2024-08-16 09:32</div>
                 </div>
               </div>
 
-              {/* Payment Info */}
-              <div className="bg-zinc-50 p-4 md:p-6 border border-zinc-200 mb-6 md:mb-8">
-                <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">支付与结算</h3>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm">订单总额</span>
-                  <span className="text-sm font-bold">¥ {selectedOrderData.totalPrice.toLocaleString()}.00</span>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-zinc-200 mt-2">
-                  <span className="text-sm font-bold">已付金额</span>
-                  <div className="text-right">
-                    <span className="text-lg font-black">
-                      ¥ {selectedOrderData.status === 'pending_payment' 
-                        ? '0.00' 
-                        : (selectedOrderData.paidAmount ? selectedOrderData.paidAmount.toLocaleString() : selectedOrderData.totalPrice.toLocaleString()) + '.00'}
-                    </span>
-                    {selectedOrderData.status !== 'pending_payment' && (
-                      <div className="text-xs text-zinc-500 font-bold">
-                        ({selectedOrderData.paymentType === 'deposit' ? '定金' : '全款'})
+              <div className="flex flex-col gap-6 mb-8 pb-8 border-b border-zinc-100">
+                {/* Box 1: 购买人与收件信息 Compact Block */}
+                <div className="border border-zinc-200 rounded-lg bg-white shadow-sm overflow-hidden flex flex-col md:flex-row">
+                  {/* Purchaser Info - Left Side */}
+                  <div className="bg-blue-50/20 p-4 border-b md:border-b-0 md:border-r border-zinc-200 w-full md:w-[35%] flex flex-col justify-center">
+                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 购买账号</div>
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={(selectedOrderData as any).purchaser?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40&q=80'} 
+                        className="w-10 h-10 rounded-full shadow-sm border border-zinc-100"
+                        alt="" 
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-black text-black">{(selectedOrderData as any).purchaser?.nickname || '微信昵称'}</span>
+                        <span className="text-[11px] font-mono text-zinc-500 font-bold">{(selectedOrderData as any).purchaser?.phone || selectedOrderData.buyerPhone}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recipient Details & ID Auth - Right Side */}
+                  <div className="flex-1 p-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                    <div className="flex-1">
+                      <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 收件信息</div>
+                      <div className="text-sm font-black text-zinc-900 mb-1">{selectedOrderData.buyerName} <span className="font-mono text-zinc-600 ml-2">{selectedOrderData.buyerPhone}</span></div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs leading-relaxed text-zinc-600 font-medium truncate max-w-sm" title={selectedOrderData.shippingAddress}>{selectedOrderData.shippingAddress}</span>
+                        {selectedOrderData.status === 'pending_shipment' && (
+                          <button onClick={() => { alert('修改地址功能开发中'); }} className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline shrink-0 font-bold ml-1">修改</button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ID Verification for Cross-Border or High Value */}
+                    {(selectedOrderData.shippingMode === 'transit' || selectedOrderData.totalPrice > 5000) && (
+                      <div className="md:border-l border-zinc-200 md:pl-4 min-w-[160px]">
+                        <div className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                          <CheckCircle size={10} /> 已实名
+                        </div>
+                        <div className="text-[11px] font-bold mb-0.5">{(selectedOrderData as any).purchaser?.realName || selectedOrderData.buyerName}</div>
+                        <div className="text-[10px] font-mono font-bold tracking-tight text-zinc-500">{((selectedOrderData as any).purchaser?.idNumber || '310*********001X').replace(/^(\d{3}).+(\d{4}.)$/, "$1**********$2")}</div>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {selectedOrderData.status === 'pending_payment' && (
-                  <div className="mt-4 pt-4 border-t border-zinc-200">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-bold">修改订单总额</span>
-                      {isEditingPrice ? (
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              value={tempPrice}
-                              onChange={(e) => setTempPrice(e.target.value)}
-                              className="border border-zinc-300 px-2 py-1 text-sm w-24"
-                              placeholder="新价格"
-                            />
-                            <button
-                              onClick={handleUpdatePrice}
-                              className="bg-black text-white px-3 py-1 text-xs font-bold"
-                            >
-                              保存
-                            </button>
-                            <button
-                              onClick={() => setIsEditingPrice(false)}
-                              className="text-zinc-500 hover:text-black text-xs font-bold"
-                            >
-                              取消
-                            </button>
+                {/* Box 2: Fulfillment & Payment */}
+                <div className="w-full flex flex-col md:flex-row gap-6">
+                  {/* 履约与供货 */}
+                  <div className="flex-1 border border-zinc-200 rounded-lg p-5 bg-white shadow-sm flex flex-col">
+                    <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4 border-b border-zinc-100 pb-2">履约与供货信息</h3>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-tighter mb-1">发货模式</div>
+                          <div className="text-sm font-black text-blue-600 uppercase tracking-tight">
+                            {selectedOrderData.shippingMode === 'transit' ? '发往中转仓' : '由上游直接代发'}
                           </div>
-                          {(selectedOrderData.warehouse === '香港直邮仓' || selectedOrderData.warehouse === '深圳保税仓') && parseFloat(tempPrice) > 0 && (
-                            <div className="text-[10px] text-zinc-500 text-right mt-1">
-                              商品实付款: ¥{(parseFloat(tempPrice) / 1.091).toFixed(2)}，关税 (9.1%): ¥{(parseFloat(tempPrice) - parseFloat(tempPrice) / 1.091).toFixed(2)}
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-tighter mb-1">对应供货商</div>
+                          <div className="text-sm font-bold text-orange-600">{selectedOrderData.supplierName}</div>
+                        </div>
+                      </div>
+
+                      {/* Dynamic Logistics/Tracking Info based on status and mode */}
+                      <div className="bg-zinc-50 border border-zinc-100 rounded p-3 flex flex-col gap-3 shrink-0 mt-auto">
+                          {/* 已发货状态 */}
+                          {(selectedOrderData.status === 'shipped' || selectedOrderData.status === 'completed' || selectedOrderData.status === 'supplier_shipped') && (
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-start text-xs">
+                                <div>
+                                  <span className="text-zinc-500 font-bold block mb-0.5 text-[9px] uppercase tracking-wider">发货单号</span>
+                                  <span className="font-mono font-bold tracking-tight text-zinc-800 select-all">{selectedOrderData.shipments?.[0]?.trackingNumber || 'SF883901238472KL'}</span>
+                                </div>
+                                <button className="text-zinc-600 hover:text-black hover:underline font-bold text-[10px] border border-zinc-200 bg-white px-2 py-1 rounded-sm shadow-sm">
+                                  查看物流轨迹
+                                </button>
+                              </div>
                             </div>
                           )}
+
+                          {/* 退款/售后状态 */}
+                          {(selectedOrderData.status === 'after_sales' || selectedOrderData.status === 'pending_refund' || selectedOrderData.status === 'refunded') && (
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center text-[10px]">
+                                <span className="text-red-500 font-bold flex-1 uppercase tracking-wider">退回单号 (快递)</span>
+                                <span className="font-mono tracking-tight text-red-600">RTN-99882231K</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* 待发货 / 其他未发货状态时 */}
+                          {!(selectedOrderData.status === 'shipped' || selectedOrderData.status === 'completed' || selectedOrderData.status === 'supplier_shipped' || selectedOrderData.status === 'pending_refund' || selectedOrderData.status === 'refunded') && (
+                            <div className="text-[10px] text-zinc-400 font-medium italic mt-1">暂无物流轨迹信息，等待发货分配。</div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Product Details & Financials */}
+              <div className="mt-8">
+                <div className="flex justify-between items-end mb-4">
+                  <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">商品明细</h3>
+                  {selectedItems.length > 0 && (
+                    <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">已选 {selectedItems.length} 件商品</span>
+                  )}
+                </div>
+                
+                <div className="border border-zinc-200 rounded-lg overflow-hidden mb-8">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-zinc-50 border-b border-zinc-100 text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
+                      <tr>
+                        <th className="p-4 w-10">
+                          <input 
+                            type="checkbox" 
+                            className="accent-black" 
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedItems(selectedOrderData.items.map((i: any) => i.id));
+                              else setSelectedItems([]);
+                            }}
+                            checked={selectedItems.length === selectedOrderData.items.length && selectedOrderData.items.length > 0}
+                          />
+                        </th>
+                        <th className="p-4">商品概览 (SKU/单价)</th>
+                        <th className="p-4">上游供应商</th>
+                        <th className="p-4 text-right">数量</th>
+                        <th className="p-4 text-right">合计</th>
+                        <th className="p-4 text-center">状态</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-50 bg-white">
+                      {selectedOrderData.items.map((item: any) => (
+                        <tr key={item.id} className="hover:bg-zinc-50/50">
+                          <td className="p-4">
+                            <input 
+                              type="checkbox" 
+                              className="accent-black" 
+                              checked={selectedItems.includes(item.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) setSelectedItems([...selectedItems, item.id]);
+                                else setSelectedItems(selectedItems.filter(id => id !== item.id));
+                              }}
+                            />
+                          </td>
+                          <td className="p-4">
+                            <div className="flex gap-4 items-center">
+                              <img src={selectedOrderData.image} className="w-12 h-12 object-cover rounded-sm border border-zinc-100" alt="" />
+                              <div>
+                                 <div className="text-xs font-black mb-1 truncate max-w-[220px]">{item.name}</div>
+                                 <div className="flex items-center gap-2">
+                                   <span className="text-[9px] text-zinc-400 font-mono">#{item.sku}</span>
+                                   <span className="text-[9px] text-zinc-800 font-black">{getCurrencySymbol(selectedOrderData.warehouse)} {item.price.toLocaleString()}</span>
+                                 </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4 text-xs text-zinc-500 font-bold">{item.supplier}</td>
+                          <td className="p-4 text-right font-mono font-bold text-xs">x{item.count}</td>
+                          <td className="p-4 text-right font-black text-xs">{getCurrencySymbol(selectedOrderData.warehouse)} {(item.price * item.count).toLocaleString()}</td>
+                          <td className="p-4 text-center">
+                            <span className={`text-[9px] font-bold px-2 py-0.5 uppercase tracking-tighter ${
+                              item.status.includes('pending') ? 'bg-orange-50 text-orange-600' : 'bg-zinc-100'
+                            }`}>{item.statusLabel}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  
+                  {/* Financial Breakdown Section */}
+                  <div className="bg-zinc-50/60 p-6 border-t border-zinc-100 flex justify-end">
+                     <div className="w-full max-w-[320px] space-y-3">
+                        <div className="flex justify-between items-center text-xs">
+                           <span className="text-zinc-500 font-bold uppercase tracking-tight">商品总额 (Subtotal)</span>
+                           <span className="font-black">{getCurrencySymbol(selectedOrderData.warehouse)} {selectedOrderData.totalPrice.toLocaleString()}</span>
                         </div>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            setTempPrice(selectedOrderData.totalPrice.toString());
-                            setIsEditingPrice(true);
-                          }}
-                          className="text-blue-600 text-xs font-bold hover:underline"
-                        >
-                          改价
-                        </button>
-                      )}
+                        
+                        <div className="pt-4 mt-4 border-t-2 border-zinc-200 flex justify-between items-baseline">
+                           <div className="flex flex-col">
+                             <span className="text-sm font-black uppercase tracking-tight">结算总额</span>
+                             <span className="text-[9px] text-zinc-400 font-bold uppercase">Total Amount</span>
+                           </div>
+                           <div className="text-right flex flex-col items-end">
+                             <div className="text-2xl font-black tracking-tighter text-black leading-none">
+                               <span className="text-xs font-normal mr-1">{getCurrencySymbol(selectedOrderData.warehouse)}</span>
+                               {selectedOrderData.totalPrice.toLocaleString()}
+                             </div>
+                             {isEditingPrice ? (
+                                <div className="mt-3 flex items-center gap-2">
+                                  <input
+                                    type="number"
+                                    value={tempPrice}
+                                    onChange={(e) => setTempPrice(e.target.value)}
+                                    className="border border-zinc-300 px-2 py-1 text-xs w-24 outline-none focus:border-black rounded-sm"
+                                  />
+                                  <button onClick={handleUpdatePrice} className="text-[9px] bg-black text-white px-2 py-1 rounded">保存修改</button>
+                                </div>
+                             ) : (
+                                <button onClick={() => { setTempPrice(selectedOrderData.totalPrice.toString()); setIsEditingPrice(true); }} className="text-[9px] text-blue-600 hover:underline mt-1 font-bold">修改订单金额</button>
+                             )}
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                </div>
+
+                {/* Logistics Trackings */}
+                {selectedOrderData.shipments && selectedOrderData.shipments.length > 0 && (
+                  <div className="mt-8 mb-8">
+                    <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-1"><Truck size={14} /> 物流跟踪 (分段发货)</h3>
+                    <div className="border border-zinc-200 bg-white">
+                      {(() => {
+                        const upstream = selectedOrderData.shipments.filter((s: any) => s.type === 'upstream');
+                        const downstream = selectedOrderData.shipments.filter((s: any) => s.type === 'downstream');
+                        return (
+                          <div className="divide-y divide-zinc-200">
+                             {upstream.length > 0 && (
+                               <div className="p-6">
+                                 <div className="text-xs font-bold mb-4 flex items-center gap-2">
+                                   <span className="w-2 h-2 rounded-full bg-blue-500"></span> 段一：上游发货 
+                                   <span className="text-[10px] text-zinc-500 font-normal">({selectedOrderData.supplierName} ➔ {selectedOrderData.warehouse || '中转仓/代发'})</span>
+                                 </div>
+                                 <div className="space-y-4 pl-4 border-l-2 border-zinc-100 ml-1">
+                                   {upstream.map((s: any) => (
+                                     <div key={s.id} className="text-xs">
+                                       <div className="font-bold text-zinc-800 flex items-center gap-2">
+                                         {s.company} 
+                                         <span className="text-blue-600 cursor-pointer hover:underline" onClick={(e) => { e.preventDefault(); alert(`查看物流轨迹\n单号: ${s.trackingNumber}`); }}>{s.trackingNumber}</span>
+                                       </div>
+                                       <div className="text-zinc-500 mt-1">包裹内容: {s.contents}</div>
+                                     </div>
+                                   ))}
+                                 </div>
+                               </div>
+                             )}
+                             {downstream.length > 0 && (
+                               <div className="p-6 bg-zinc-50/50">
+                                 <div className="text-xs font-bold mb-4 flex items-center gap-2">
+                                   <span className="w-2 h-2 rounded-full bg-green-500"></span> 段二：发往买家 
+                                 </div>
+                                 <div className="space-y-4 pl-4 border-l-2 border-zinc-100 ml-1">
+                                   {downstream.map((s: any) => (
+                                     <div key={s.id} className="text-xs">
+                                       <div className="font-bold text-zinc-800 flex items-center gap-2">{s.company} {s.trackingNumber}</div>
+                                     </div>
+                                   ))}
+                                 </div>
+                               </div>
+                             )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Product List */}
-              <div>
-                <div className="flex justify-between items-end mb-4">
-                  <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">商品明细与操作</h3>
-                </div>
-                
-                <div className="border border-zinc-200 bg-white">
-                  {/* Desktop Table */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-left text-sm min-w-[700px]">
-                      <thead className="bg-zinc-50 border-b border-zinc-200 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                        <tr>
-                          <th className="p-4 w-10">
-                            <input type="checkbox" className="accent-black" disabled />
-                          </th>
-                          <th className="p-4">商品</th>
-                          <th className="p-4">上游供应商</th>
-                          <th className="p-4 text-right">数量</th>
-                          <th className="p-4 text-right">单价</th>
-                          <th className="p-4 text-center">状态</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-100">
-                        {selectedOrderData.items.map((item: any) => (
-                          <tr key={item.id} className="hover:bg-zinc-50">
-                            <td className="p-4">
-                              <input type="checkbox" className="accent-black" disabled />
-                            </td>
-                            <td className="p-4">
-                              <div className="font-bold text-xs">{item.name}</div>
-                              <div className="text-[10px] text-zinc-400">SKU: {item.sku}</div>
-                            </td>
-                            <td className="p-4 text-xs text-zinc-500">{item.supplier}</td>
-                            <td className="p-4 text-right font-mono">{item.count}</td>
-                            <td className="p-4 text-right font-mono">¥ {item.price.toLocaleString()}</td>
-                            <td className="p-4 text-center"><span className="text-orange-600 text-xs font-bold">{item.statusLabel}</span></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  {/* Mobile Stacked List */}
-                  <div className="md:hidden flex flex-col divide-y divide-zinc-100">
-                    {selectedOrderData.items.map((item: any) => (
-                      <div key={item.id} className="p-4 flex flex-col gap-2">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3">
-                            <input type="checkbox" className="accent-black mt-1" disabled />
-                            <div>
-                              <div className="font-bold text-xs">{item.name}</div>
-                              <div className="text-[10px] text-zinc-400 mt-0.5">SKU: {item.sku}</div>
-                              <div className="text-[10px] text-zinc-500 mt-1">上游: {item.supplier}</div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold text-xs">¥ {item.price.toLocaleString()}</div>
-                            <div className="text-[10px] text-zinc-500 mt-0.5">x {item.count}</div>
-                          </div>
-                        </div>
-                        <div className="flex justify-end mt-2">
-                          <span className="text-orange-600 text-[10px] font-bold px-2 py-1 bg-orange-50">{item.statusLabel}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Logistics Trackings */}
-              {selectedOrderData.shipments && selectedOrderData.shipments.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-1"><Truck size={14} /> 物流跟踪 (分段发货)</h3>
-                  <div className="border border-zinc-200 bg-white">
-                    {(() => {
-                      const upstream = selectedOrderData.shipments.filter((s: any) => s.type === 'upstream');
-                      const downstream = selectedOrderData.shipments.filter((s: any) => s.type === 'downstream');
-                      return (
-                        <div className="divide-y divide-zinc-200">
-                           {upstream.length > 0 && (
-                             <div className="p-6">
-                               <div className="text-xs font-bold mb-4 flex items-center gap-2">
-                                 <span className="w-2 h-2 rounded-full bg-blue-500"></span> 段一：上游发货 
-                                 <span className="text-[10px] text-zinc-500 font-normal">({selectedOrderData.supplierName} ➔ {selectedOrderData.warehouse || '中转仓/代发'})</span>
-                               </div>
-                               <div className="space-y-4 pl-4 border-l-2 border-zinc-100 ml-1">
-                                 {upstream.map((s: any) => (
-                                   <div key={s.id} className="text-xs">
-                                     <div className="font-bold text-zinc-800 flex items-center gap-2">
-                                       {s.company} 
-                                       <span 
-                                         className="text-blue-600 cursor-pointer hover:underline" 
-                                         onClick={(e) => { e.preventDefault(); alert(`查看物流轨迹\r\n\r\n单号: ${s.trackingNumber}\r\n状态: 运输中...\r\n包裹内容: ${s.contents}`); }}
-                                       >
-                                         {s.trackingNumber}
-                                       </span>
-                                     </div>
-                                     <div className="text-zinc-500 mt-1">包裹内容: {s.contents}</div>
-                                   </div>
-                                 ))}
-                               </div>
-                             </div>
-                           )}
-                           {downstream.length > 0 && (
-                             <div className="p-6 bg-zinc-50/50">
-                               <div className="text-xs font-bold mb-4 flex items-center gap-2">
-                                 <span className="w-2 h-2 rounded-full bg-green-500"></span> 段二：发往买家 
-                                 <span className="text-[10px] text-zinc-500 font-normal">({selectedOrderData.warehouse || '中转仓/代发' } ➔ {selectedOrderData.buyerName})</span>
-                               </div>
-                               <div className="space-y-4 pl-4 border-l-2 border-zinc-100 ml-1">
-                                 {downstream.map((s: any) => (
-                                   <div key={s.id} className="text-xs">
-                                     <div className="font-bold text-zinc-800 flex items-center gap-2">
-                                       {s.company} 
-                                       <span 
-                                         className="text-blue-600 cursor-pointer hover:underline" 
-                                         onClick={(e) => { e.preventDefault(); alert(`查看物流轨迹\r\n\r\n单号: ${s.trackingNumber}\r\n状态: 运输中...\r\n包裹内容: ${s.contents}`); }}
-                                       >
-                                         {s.trackingNumber}
-                                       </span>
-                                     </div>
-                                     <div className="text-zinc-500 mt-1">包裹内容: {s.contents}</div>
-                                   </div>
-                                 ))}
-                               </div>
-                             </div>
-                           )}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              )}
 
               {/* Order Progress Details */}
-              <div className="mt-8">
-                <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">订单进程明细</h3>
-                <div className="border border-zinc-200">
-                  {/* Desktop Table */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-left text-sm min-w-[700px]">
-                      <thead className="bg-zinc-50 border-b border-zinc-200 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                        <tr>
-                          <th className="p-4">操作时间</th>
-                          <th className="p-4">进程说明</th>
-                          <th className="p-4">涉及商品</th>
-                          <th className="p-4">金额变动</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-zinc-100 text-zinc-800">
-                        {selectedOrderData.progress?.map((p: any) => (
-                          <tr key={p.id} className="hover:bg-zinc-50 transition-colors">
-                            <td className="p-4 font-mono text-xs">{p.time}</td>
-                            <td className="p-4 font-bold text-black">{p.description}</td>
-                            <td className="p-4">{p.items}</td>
-                            <td className="p-4 font-mono">{p.amountChange}</td>
-                          </tr>
-                        ))}
-                        {(!selectedOrderData.progress || selectedOrderData.progress.length === 0) && (
-                          <tr>
-                            <td colSpan={4} className="p-8 text-center text-zinc-500 text-xs">暂无进程记录</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Mobile Stacked List */}
-                  <div className="md:hidden flex flex-col divide-y divide-zinc-100 bg-white">
-                    {selectedOrderData.progress?.map((p: any) => (
-                      <div key={p.id} className="p-4 flex flex-col gap-2">
-                        <div className="flex justify-between items-start">
-                          <div className="font-bold text-sm text-black">{p.description}</div>
-                          <div className="font-mono text-[10px] text-zinc-400">{p.time}</div>
-                        </div>
-                        <div className="flex justify-between items-end mt-1">
-                          <div className="text-xs text-zinc-500">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-0.5">涉及商品</span>
-                            {p.items}
-                          </div>
-                          <div className="text-right">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-0.5">金额变动</span>
-                            <span className="font-mono text-xs font-bold">{p.amountChange}</span>
-                          </div>
-                        </div>
+              <div className="mt-8 border-t border-zinc-100 pt-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">订单进程</h3>
+                  <CheckCircle size={14} className="text-zinc-300" />
+                </div>
+                <div className="relative pl-8 space-y-10 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-zinc-100 mb-8">
+                  {(selectedOrderData.progress || []).slice().reverse().map((p: any, idx: number) => (
+                    <div key={p.id} className="relative group">
+                      <div className={`absolute -left-[30px] top-1.5 w-[22px] h-[22px] rounded-full border-4 border-white shadow-md flex items-center justify-center transition-all group-hover:scale-110 z-10 ${
+                        idx === 0 ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-400'
+                      }`}>
+                         {idx === 0 ? <Check size={10} strokeWidth={4} /> : <div className="w-1.5 h-1.5 rounded-full bg-zinc-300" />}
                       </div>
-                    ))}
-                    {(!selectedOrderData.progress || selectedOrderData.progress.length === 0) && (
-                      <div className="p-8 text-center text-zinc-500 text-xs">暂无进程记录</div>
-                    )}
-                  </div>
-
-                  <div className="p-4 bg-zinc-50 border-t border-zinc-200 flex flex-col md:flex-row gap-4 items-center">
+                      <div>
+                         <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-1 mb-2">
+                            <span className="text-xs font-black text-zinc-900 leading-tight">{p.description}</span>
+                            <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase">{p.time}</span>
+                         </div>
+                         {(p.items !== '-' || p.amountChange !== '-') && (
+                           <div className="flex gap-4 items-center mt-2 px-3 py-1.5 bg-zinc-50/50 rounded-sm border border-zinc-100 w-fit">
+                             {p.items !== '-' && <div className="text-[9px] text-zinc-400 font-bold uppercase tracking-tight">对象: <span className="text-zinc-600">{p.items}</span></div>}
+                             {p.amountChange !== '-' && (
+                               <div className={`text-[9px] font-black uppercase tracking-tight ${p.amountChange.startsWith('+') ? 'text-green-600' : 'text-red-500'}`}>
+                                 变动: {p.amountChange}
+                               </div>
+                             )}
+                           </div>
+                         )}
+                      </div>
+                    </div>
+                  ))}
+                  {(!selectedOrderData.progress || selectedOrderData.progress.length === 0) && (
+                    <div className="text-center text-zinc-500 text-xs py-8 leading-none">暂无进程记录</div>
+                  )}
+                </div>
+                
+                <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-lg flex flex-col md:flex-row gap-4 items-center">
+                  <input 
+                    type="text" 
+                    placeholder="手动添加进程说明 (如: 供货商部分退款)" 
+                    value={newProgressDesc}
+                    onChange={(e) => setNewProgressDesc(e.target.value)}
+                    className="w-full md:flex-1 bg-white border border-zinc-200 px-3 py-2 text-xs text-black focus:border-black outline-none rounded-sm"
+                  />
+                  <div className="flex gap-2 w-full md:w-auto">
                     <input 
                       type="text" 
-                      placeholder="手动添加进程说明 (如: 供货商部分退款)" 
-                      value={newProgressDesc}
-                      onChange={(e) => setNewProgressDesc(e.target.value)}
-                      className="w-full md:flex-1 bg-white border border-zinc-200 px-3 py-2 text-xs text-black focus:border-black outline-none"
+                      placeholder="金额变动 (-¥5,000)" 
+                      value={newProgressAmount}
+                      onChange={(e) => setNewProgressAmount(e.target.value)}
+                      className="w-full md:w-32 bg-white border border-zinc-200 px-3 py-2 text-xs text-black focus:border-black outline-none rounded-sm"
                     />
-                    <div className="flex gap-4 w-full md:w-auto">
-                      <input 
-                        type="text" 
-                        placeholder="金额变动 (如: -¥5,000)" 
-                        value={newProgressAmount}
-                        onChange={(e) => setNewProgressAmount(e.target.value)}
-                        className="w-full md:w-48 bg-white border border-zinc-200 px-3 py-2 text-xs text-black focus:border-black outline-none"
-                      />
-                      <div className="flex shadow-sm">
-                        <button 
-                          onClick={handleAddManualProgress}
-                          disabled={!newProgressDesc}
-                          className="bg-black text-white px-4 py-2 text-xs font-bold hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap"
-                        >
-                          记录
-                        </button>
-                        <button 
-                          onClick={handleCreateWorkOrder}
-                          disabled={!newProgressDesc}
-                          className="bg-orange-600 text-white px-4 py-2 text-xs font-bold hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap border-l border-white/20 flex items-center gap-1"
-                          title="发起财务工单"
-                        >
-                          <Wrench size={14} />
-                          转工单
-                        </button>
-                      </div>
+                    <div className="flex shadow-sm rounded-sm overflow-hidden border border-black">
+                      <button 
+                        onClick={handleAddManualProgress}
+                        disabled={!newProgressDesc}
+                        className="bg-black text-white px-4 py-2 text-xs font-bold hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap"
+                      >记录</button>
+                      <button 
+                        onClick={() => alert("转工单")}
+                        disabled={!newProgressDesc}
+                        className="bg-orange-600 text-white px-3 py-2 text-xs font-bold hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 border-l border-white/20 flex items-center"
+                        title="发起财务工单"
+                      ><Wrench size={12} /></button>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
             </div>
 
             {/* Action Footer */}

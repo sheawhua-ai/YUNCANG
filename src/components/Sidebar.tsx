@@ -25,7 +25,7 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, onClose }: SidebarPro
       items: [
         { id: 'self_product', label: '商品管理' },
         { id: 'offer_to_marketplace', label: '出价到集市' },
-        { id: 'self_order', label: '订单管理' },
+        { id: 'self_order', label: '自营订单' },
       ]
     },
     {
@@ -73,10 +73,10 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, onClose }: SidebarPro
       
       <div className="p-6 border-b border-zinc-100 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <img src="https://i.pravatar.cc/150?img=11" alt="User" className="w-10 h-10 rounded-none bg-zinc-100 object-cover grayscale" />
+          <img src="https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&w=100&q=80" alt="Service Provider" className="w-10 h-10 rounded-sm bg-zinc-100 object-cover grayscale border border-zinc-200" />
           <div>
-            <div className="text-sm font-bold text-black">系统管理员</div>
-            <div className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">采购主管</div>
+            <div className="text-sm font-bold text-black leading-tight">极速云仓服务商</div>
+            <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-0.5">ID: SERVICE_HQ_7782</div>
           </div>
         </div>
       </div>

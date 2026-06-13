@@ -67,7 +67,7 @@ export function ProductManagement() {
         </div>
       </div>
 
-      {/* Workflow Pipeline removed as per user request */}
+
 
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center justify-between overflow-x-auto hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
@@ -76,13 +76,19 @@ export function ProductManagement() {
               onClick={() => setActiveListTab('on_sale')}
               className={`pb-3 text-xs font-bold transition-colors ${activeListTab === 'on_sale' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
             >
-              出售中 / 待对标
+              出售中 (已对标)
+            </button>
+            <button 
+              onClick={() => setActiveListTab('pending_mapping')}
+              className={`pb-3 text-xs font-bold transition-colors ${activeListTab === 'pending_mapping' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
+            >
+              对标中/异常
             </button>
             <button 
               onClick={() => setActiveListTab('offline')}
               className={`pb-3 text-xs font-bold transition-colors ${activeListTab === 'offline' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
             >
-              仓库中 / 已下架
+              仓库中 / 下架
             </button>
             <button 
               onClick={() => setActiveListTab('sold_out')}
@@ -142,18 +148,6 @@ export function ProductManagement() {
       </div>
 
       <div className="bg-white border border-zinc-200 shadow-sm mt-4 p-4 border-b-0 flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-zinc-50 px-3 py-2 border border-zinc-200">
-          <input 
-            type="checkbox" 
-            className="accent-black w-4 h-4"
-            checked={selectedProducts.length > 0}
-            onChange={(e) => {
-              if (e.target.checked) setSelectedProducts(['rolex', 'burberry', 'gucci', 'patek']);
-              else setSelectedProducts([]);
-            }}
-          />
-          <span className="text-[10px] font-bold">全选</span>
-        </div>
         {activeListTab === 'pending_mapping' && (
           <button className="bg-black text-white px-4 py-2 text-[10px] font-bold hover:bg-zinc-800 transition-colors">
             批量申请新增公共库
@@ -163,19 +157,7 @@ export function ProductManagement() {
 
       <div className="bg-white border border-zinc-200 shadow-sm">
         <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-zinc-200 bg-zinc-50 text-[10px] font-bold text-zinc-500 uppercase tracking-widest items-center">
-          <div className="col-span-4 flex items-center gap-2">
-            <input 
-              type="checkbox" 
-              className="accent-black w-4 h-4 mr-2" 
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setSelectedProducts(['rolex', 'burberry', 'gucci', 'patek']);
-                } else {
-                  setSelectedProducts([]);
-                }
-              }}
-              checked={selectedProducts.length > 0}
-            />
+          <div className="col-span-4 flex items-center gap-2 pl-6">
             商品信息 / SPU 名称
           </div>
           <div className="col-span-4 text-center">规格与仓库</div>
