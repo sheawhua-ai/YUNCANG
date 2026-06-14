@@ -938,12 +938,39 @@ export function DistributorOrderManagement() {
                 )}
                 {selectedOrderData.status === 'after_sales' && (
                   <>
-                    {selectedOrderData.statusLabel === '售后处理' && (
+                    {(selectedOrderData.statusLabel === '售后处理' || selectedOrderData.statusLabel === '待审核') && (
                       <button 
                         onClick={() => setIsAfterSalesModalOpen(true)}
                         className="w-full md:w-auto bg-white border border-zinc-200 text-black px-6 py-2 text-xs font-bold uppercase tracking-widest hover:border-black transition-colors"
                       >
                         售后审批
+                      </button>
+                    )}
+                    {(selectedOrderData.statusLabel === '待顾客退回' || selectedOrderData.statusLabel === '待仓库验货') && (
+                      <button onClick={() => {
+                        const now = new Date().toISOString().replace('T', ' ').slice(0, 16);
+                        const isExchange = selectedOrderData.progress.some((p: any) => p.description.includes('同意换货'));
+                        setOrders(orders.map(o => o.id === selectedOrderData.id ? { 
+                          ...o, 
+                          statusLabel: isExchange ? '待重新发货' : '待退款',
+                          progress: [{ id: `p-${Date.now()}`, time: now, description: '供应商收到退货并同意操作', items: '相关商品', amountChange: '-' }, ...(o.progress || [])]
+                        } : o));
+                      }} className="w-full md:w-auto bg-blue-600 border border-blue-600 text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors">
+                        供应商已收退货
+                      </button>
+                    )}
+                    {selectedOrderData.statusLabel === '待重新发货' && (
+                      <button onClick={() => {
+                        const now = new Date().toISOString().replace('T', ' ').slice(0, 16);
+                        setOrders(orders.map(o => o.id === selectedOrderData.id ? { 
+                          ...o, 
+                          status: 'pending_shipment', 
+                          statusLabel: '待发货',
+                          progress: [{ id: `p-${Date.now()}`, time: now, description: '换货完毕，重新生成发货单', items: '换货商品', amountChange: '-' }, ...(o.progress || [])]
+                        } : o));
+                        setSelectedOrder(null);
+                      }} className="w-full md:w-auto bg-purple-600 border border-purple-600 text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-purple-700 transition-colors">
+                        换新并重入库发货
                       </button>
                     )}
                     {(selectedOrderData.statusLabel === '退款中' || selectedOrderData.statusLabel === '待退款') && (
@@ -958,32 +985,6 @@ export function DistributorOrderManagement() {
                         setSelectedOrder(null);
                       }} className="w-full md:w-auto bg-green-600 border border-green-600 text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-green-700 transition-colors">
                         完成退款
-                      </button>
-                    )}
-                    {selectedOrderData.statusLabel === '退货退款中' && (
-                      <button onClick={() => {
-                        const now = new Date().toISOString().replace('T', ' ').slice(0, 16);
-                        setOrders(orders.map(o => o.id === selectedOrderData.id ? { 
-                          ...o, 
-                          statusLabel: '待退款',
-                          progress: [{ id: `p-${Date.now()}`, time: now, description: '供应商收到退货并同意退款', items: '相关商品', amountChange: '-' }, ...(o.progress || [])]
-                        } : o));
-                      }} className="w-full md:w-auto bg-blue-600 border border-blue-600 text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors">
-                        供应商已收退货
-                      </button>
-                    )}
-                    {selectedOrderData.statusLabel === '换货处理中' && (
-                      <button onClick={() => {
-                        const now = new Date().toISOString().replace('T', ' ').slice(0, 16);
-                        setOrders(orders.map(o => o.id === selectedOrderData.id ? { 
-                          ...o, 
-                          status: 'pending_shipment', 
-                          statusLabel: '待发货',
-                          progress: [{ id: `p-${Date.now()}`, time: now, description: '换货完毕，重新生成发货单', items: '换货商品', amountChange: '-' }, ...(o.progress || [])]
-                        } : o));
-                        setSelectedOrder(null);
-                      }} className="w-full md:w-auto bg-purple-600 border border-purple-600 text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-purple-700 transition-colors">
-                        换新并重入库发货
                       </button>
                     )}
                   </>
@@ -1093,8 +1094,8 @@ export function DistributorOrderManagement() {
                       if (o.id === selectedOrderData.id) {
                         return {
                           ...o,
-                          status: afterSalesDecision === 'reject' ? o.status : 'refunded', // Simple state update for demo
-                          statusLabel: afterSalesDecision === 'refund_only' ? '退款中' : afterSalesDecision === 'refund' ? '退货退款中' : afterSalesDecision === 'exchange' ? '换货处理中' : o.statusLabel,
+                          status: afterSalesDecision === 'reject' ? o.status : 'after_sales',
+                          statusLabel: afterSalesDecision === 'refund_only' ? '待退款' : afterSalesDecision === 'reject' ? o.statusLabel : '待顾客退回',
                           progress: [newProgress, ...(o.progress || [])]
                         };
                       }

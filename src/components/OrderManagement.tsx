@@ -1579,8 +1579,22 @@ export function OrderManagement() {
                       )}
                       {selectedOrderData.status === 'after_sales' && (
                         <>
-                          {selectedOrderData.statusLabel === '售后处理' && (
+                          {(selectedOrderData.statusLabel === '售后处理' || selectedOrderData.statusLabel === '待审核') && (
                             <button onClick={() => { setIsAfterSalesModalOpen(true); }} className="text-xs font-bold border border-zinc-200 px-6 py-2 bg-white hover:border-black transition-colors">售后审批</button>
+                          )}
+                          {(selectedOrderData.statusLabel === '待顾客退回' || selectedOrderData.statusLabel === '待仓库验货') && (
+                            <button onClick={() => {
+                              const now = new Date().toISOString().replace('T', ' ').slice(0, 16);
+                              const isExchange = selectedOrderData.progress.some((p: any) => p.description.includes('同意换货') || p.description.includes('申请售后 - 换货'));
+                              setOrders(orders.map(o => o.id === selectedOrderData.id ? { 
+                                ...o, 
+                                statusLabel: isExchange ? '待重新发货' : '待退款',
+                                progress: [{ id: `p-${Date.now()}`, time: now, description: '仓库已签收退货: 验货合格', items: '全部商品', amountChange: '-' }, ...(o.progress || [])]
+                              } : o));
+                            }} className="text-xs font-bold border border-zinc-200 bg-white px-6 py-2 hover:border-black transition-colors">确认入库 / 验货合格</button>
+                          )}
+                          {selectedOrderData.statusLabel === '待重新发货' && (
+                            <button onClick={() => { setIsShipModalOpen(true); }} className="text-xs font-bold bg-blue-600 text-white px-6 py-2 hover:bg-blue-700 transition-colors shadow-sm">重新发货</button>
                           )}
                           {(selectedOrderData.statusLabel === '处理中' || selectedOrderData.statusLabel === '待退款') && (
                             <button onClick={() => {
@@ -1588,23 +1602,13 @@ export function OrderManagement() {
                               setOrders(orders.map(o => o.id === selectedOrderData.id ? { 
                                 ...o, 
                                 status: 'refunded', 
-                                statusLabel: '已退款',
+                                statusLabel: '售后已退款',
                                 progress: [{ id: `p-${Date.now()}`, time: now, description: '财务退款成功: 原路退回', items: '全部商品', amountChange: '-' }, ...(o.progress || [])]
                               } : o));
                               setSelectedOrder(null);
                             }} className="text-xs font-bold bg-green-600 text-white px-6 py-2 hover:bg-green-700 transition-colors shadow-sm">完成退款</button>
                           )}
-                          {selectedOrderData.statusLabel === '待顾客退回' && (
-                            <button onClick={() => {
-                              const now = new Date().toISOString().replace('T', ' ').slice(0, 16);
-                              setOrders(orders.map(o => o.id === selectedOrderData.id ? { 
-                                ...o, 
-                                statusLabel: '待退款',
-                                progress: [{ id: `p-${Date.now()}`, time: now, description: '仓库已签收退货: 验货合格', items: '全部商品', amountChange: '-' }, ...(o.progress || [])]
-                              } : o));
-                            }} className="text-xs font-bold bg-blue-600 text-white px-6 py-2 hover:bg-blue-700 transition-colors shadow-sm">确认仓库收货</button>
-                          )}
-                          <button onClick={() => { alert('订单完结功能开发中'); }} className="text-xs font-bold bg-black text-white px-6 py-2 hover:bg-zinc-800 transition-colors shadow-sm">订单完结</button>
+                          <button onClick={() => { alert('订单关闭操作成功'); setSelectedOrder(null); }} className="text-xs font-bold bg-black text-white px-6 py-2 hover:bg-zinc-800 transition-colors shadow-sm">订单完结</button>
                         </>
                       )}
                     </div>

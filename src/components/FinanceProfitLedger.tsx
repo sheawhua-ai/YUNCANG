@@ -34,10 +34,26 @@ export function FinanceProfitLedger() {
   const [entries, setEntries] = useState<LedgerEntry[]>(MOCK_LEDGER);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editOutflow, setEditOutflow] = useState<string>('');
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState('orderId');
 
   const filteredEntries = entries.filter(e => {
     if (e.majorType !== majorTab) return false;
     if (majorTab === 'self' && regionFilter !== 'all' && e.region !== regionFilter) return false;
+    
+    // Search filtering
+    if (searchQuery) {
+      const qs = searchQuery.toLowerCase();
+      if (searchType === 'orderId') {
+        const paymentId = `PAY-${e.orderId.substring(6)}-2024`.toLowerCase();
+        if (!e.orderId.toLowerCase().includes(qs) && !paymentId.includes(qs)) return false;
+      }
+      if (searchType === 'product' && !e.product.toLowerCase().includes(qs)) return false;
+      if (searchType === 'supplier' && !e.supplier.toLowerCase().includes(qs)) return false;
+    }
+    
     return true;
   });
 
@@ -111,9 +127,31 @@ export function FinanceProfitLedger() {
               </button>
             </div>
           )}
+          
+          <div className="flex gap-2 items-center mt-2 md:mt-0">
+            <select 
+              value={searchType}
+              onChange={e => setSearchType(e.target.value)}
+              className="border border-zinc-200 px-3 py-2 text-xs focus:border-black focus:ring-0 outline-none bg-white"
+            >
+              <option value="orderId">订单/支付单号</option>
+              <option value="product">商品名称</option>
+              {majorTab === 'distributor' && <option value="supplier">供货商</option>}
+            </select>
+            <div className="relative w-full md:w-64">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <input 
+                type="text" 
+                placeholder={searchType === 'orderId' ? "搜索订单号/支付单号..." : searchType === 'product' ? "搜索商品名称..." : "搜索供货商..."}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full border border-zinc-200 pl-9 pr-3 py-2 text-xs focus:border-black focus:ring-0 outline-none relative"
+              />
+            </div>
+          </div>
         </div>
         
-        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 text-xs font-bold hover:border-black transition-colors shrink-0">
+        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 text-xs font-bold hover:border-black transition-colors shrink-0 md:self-start">
           <Download size={14} />
           导出对账单
         </button>
@@ -176,12 +214,18 @@ export function FinanceProfitLedger() {
                 
                 return (
                   <tr key={entry.id} className="hover:bg-zinc-50/50 transition-colors">
-                    <td className="px-4 py-4">
-                      <div className="font-bold flex items-center gap-1 text-xs">
-                        <FileText size={12} className="text-zinc-400" />
-                        {entry.orderId}
+                    <td className="px-4 py-4 min-w-[200px]">
+                      <div className="flex flex-col gap-1">
+                        <div className="font-bold flex items-center gap-1 text-[10px]">
+                          <span className="text-zinc-500 font-normal shrink-0">主单号</span>
+                          <span>{entry.orderId}</span>
+                        </div>
+                        <div className="font-bold flex items-center gap-1 text-[10px]">
+                          <span className="text-zinc-500 font-normal shrink-0">支付单号</span>
+                          <span className="font-mono">PAY-{entry.orderId.substring(6)}-2024</span>
+                        </div>
                       </div>
-                      <div className="text-[10px] text-zinc-400 mt-1">{entry.date}</div>
+                      <div className="text-[10px] text-zinc-400 mt-2">{entry.date}</div>
                     </td>
                     <td className="px-4 py-4">
                        <span className="font-bold text-xs">{entry.product}</span>

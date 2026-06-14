@@ -342,14 +342,13 @@ export function FinanceAudit() {
 
       <div className="flex gap-8 border-b border-zinc-200 mb-6 overflow-x-auto no-scrollbar whitespace-nowrap">
         <button onClick={() => setActiveMainTab('reconciliation')} className={`pb-3 text-sm font-bold transition-colors ${activeMainTab === 'reconciliation' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>收款核销</button>
-        <button onClick={() => setActiveMainTab('withdrawal')} className={`pb-3 text-sm font-bold transition-colors ${activeMainTab === 'withdrawal' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>对账</button>
+        <button onClick={() => setActiveMainTab('profit_ledger')} className={`pb-3 text-sm font-bold transition-colors ${activeMainTab === 'profit_ledger' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>对账与利润核算</button>
         <button onClick={() => setActiveMainTab('work_order')} className={`pb-3 text-sm font-bold transition-colors flex items-center gap-1 ${activeMainTab === 'work_order' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>
           工单处理
           {workOrders.filter(o => o.status === 'pending').length > 0 && (
             <span className="bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full leading-none">{workOrders.filter(o => o.status === 'pending').length}</span>
           )}
         </button>
-        <button onClick={() => setActiveMainTab('profit_ledger')} className={`pb-3 text-sm font-bold transition-colors ${activeMainTab === 'profit_ledger' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>利润核算与对账</button>
       </div>
 
       {activeMainTab === 'reconciliation' ? (
@@ -570,15 +569,12 @@ export function FinanceAudit() {
       ) : activeMainTab === 'work_order' ? (
         <WorkOrderManagement />
       ) : activeMainTab === 'profit_ledger' ? (
-        <FinanceProfitLedger />
-      ) : activeMainTab === 'withdrawal' ? (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
           {/* Account Sub-Tabs */}
           <div className="flex gap-6 border-b border-zinc-200">
             <button 
               onClick={() => {
                 setActiveAccountTab('domestic');
-                if (activeFlowTab === 'margin') setActiveFlowTab('order');
               }}
               className={`pb-3 text-sm font-bold transition-colors ${activeAccountTab === 'domestic' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
             >
@@ -732,299 +728,12 @@ export function FinanceAudit() {
             </div>
           </div>
 
-          {/* 流水明细块 */}
-          <div className="space-y-6">
-            
-            {/* 流水 Tab 切换 */}
-            <div className="flex gap-6 border-b border-zinc-200">
-              <button 
-                onClick={() => setActiveFlowTab('order')} 
-                className={`pb-3 text-sm font-bold transition-colors ${activeFlowTab === 'order' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
-              >
-                订单结算流水
-              </button>
-              {activeAccountTab === 'international' && (
-                <button 
-                  onClick={() => setActiveFlowTab('margin')} 
-                  className={`pb-3 text-sm font-bold transition-colors ${activeFlowTab === 'margin' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}
-                >
-                  保证金流水
-                </button>
-              )}
-            </div>
-
-            {activeFlowTab === 'order' && (
-              <div className="space-y-6 animate-in fade-in duration-300">
-                {/* 结算流水筛选 */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex gap-4 items-center">
-                    <input 
-                      type="text" 
-                      placeholder="搜索订单号..." 
-                      value={settlementSearch}
-                      onChange={e => setSettlementSearch(e.target.value)}
-                      className="border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-0 outline-none w-full md:w-64"
-                    />
-                    <select 
-                      value={settlementStatus}
-                      onChange={e => setSettlementStatus(e.target.value)}
-                      className="border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-0 outline-none bg-white w-full md:w-auto"
-                    >
-                      <option value="all">全部结算状态</option>
-                      <option value="frozen">冻结中</option>
-                      <option value="settled">已结算</option>
-                      <option value="refunding">退款中</option>
-                      <option value="refunded">已退款</option>
-                    </select>
-                  </div>
-                  <div className="relative w-full md:w-auto" ref={calendarRef}>
-                    <button 
-                      onClick={() => setShowCalendar(!showCalendar)}
-                      className="flex items-center gap-2 bg-white border border-zinc-200 px-4 py-2 hover:border-black transition-colors min-w-[260px] w-full md:w-auto overflow-hidden text-ellipsis whitespace-nowrap text-left"
-                    >
-                      <CalendarIcon size={18} className="text-zinc-400 shrink-0" />
-                      <span className="text-sm font-bold">
-                        {dateRange.start ? dateRange.start : '选择开始日期'} 
-                        {' 至 '} 
-                        {dateRange.end ? dateRange.end : (dateRange.start ? '选择结束日期' : '选择结束日期')}
-                      </span>
-                    </button>
-                    {/* Reusing showCalendar dropdown */}
-                    {showCalendar && (
-                      <div className="absolute top-full right-0 mt-2 bg-white border border-zinc-200 shadow-xl p-4 z-20 w-72">
-                        <div className="flex items-center justify-between mb-4">
-                          <button 
-                            onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))}
-                            className="p-1 hover:bg-zinc-100 rounded"
-                          >
-                            <ChevronLeft size={16} />
-                          </button>
-                          <div className="font-bold text-sm">
-                            {calendarMonth.getFullYear()}年 {calendarMonth.getMonth() + 1}月
-                          </div>
-                          <button 
-                            onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))}
-                            className="p-1 hover:bg-zinc-100 rounded"
-                          >
-                            <ChevronRight size={16} />
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                          {['日', '一', '二', '三', '四', '五', '六'].map(d => (
-                            <div key={d} className="text-[10px] font-bold text-zinc-400">{d}</div>
-                          ))}
-                        </div>
-                        <div className="grid grid-cols-7 gap-1">
-                          {Array.from({length: new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0).getDate()}).map((_, i) => {
-                            const dateStr = `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`;
-                            const isSelected = dateRange.start === dateStr || dateRange.end === dateStr;
-                            const isBetween = dateRange.start && dateRange.end && dateStr > dateRange.start && dateStr < dateRange.end;
-                            return (
-                              <button 
-                                key={i} 
-                                onClick={() => {
-                                  if (!dateRange.start || (dateRange.start && dateRange.end)) {
-                                    setDateRange({start: dateStr, end: null});
-                                  } else if (dateStr >= dateRange.start) {
-                                    setDateRange({start: dateRange.start, end: dateStr});
-                                    setShowCalendar(false);
-                                  } else {
-                                    setDateRange({start: dateStr, end: dateRange.start});
-                                    setShowCalendar(false);
-                                  }
-                                }}
-                                className={`p-2 text-xs text-center hover:bg-zinc-100 rounded ${isSelected ? 'bg-black text-white hover:bg-zinc-800' : ''} ${isBetween ? 'bg-zinc-100' : ''}`}
-                              >
-                                {i + 1}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 订单流水 */}
-                <div className="bg-white border border-zinc-200 shadow-sm">
-                  <div className="p-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
-                    <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
-                      <Banknote size={18} />
-                      订单结算流水
-                    </h2>
-                    <div className="text-xs text-zinc-500">展示最近结算及手续费扣除记录</div>
-                  </div>
-                  <div className="p-0 overflow-x-auto">
-                    <table className="w-full text-left text-sm min-w-[700px]">
-                      <thead className="bg-zinc-50/50 text-xs text-zinc-500 uppercase">
-                        <tr>
-                          <th className="px-6 py-3 font-bold border-b border-zinc-200">订单号/时间</th>
-                          <th className="px-6 py-3 font-bold border-b border-zinc-200">结算状态</th>
-                          <th className="px-6 py-3 font-bold border-b border-zinc-200 text-right">结算货款</th>
-                          <th className="px-6 py-3 font-bold border-b border-zinc-200 text-right">结算佣金</th>
-                          <th className="px-6 py-3 font-bold border-b border-zinc-200 text-right text-orange-600">手续费</th>
-                          <th className="px-6 py-3 font-bold border-b border-zinc-200 text-right text-green-600">实际入账</th>
-                          <th className="px-6 py-3 font-bold border-b border-zinc-200 text-center">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeAccountTab === 'international' ? (
-                          <>
-                            <tr className="hover:bg-zinc-50 border-b border-zinc-100">
-                              <td className="px-6 py-4">
-                                <div className="font-mono text-xs text-blue-600 hover:underline cursor-pointer" onClick={() => setSelectedSettlementOrderId('O-DEP-88902')}>O-DEP-88902</div>
-                                <div className="text-xs text-zinc-400">2024-05-02 10:15</div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-1 text-[10px] font-bold">已结算</span>
-                              </td>
-                              <td className="px-6 py-4 text-right">¥ 8,000.00</td>
-                              <td className="px-6 py-4 text-right">¥ 2,000.00</td>
-                              <td className="px-6 py-4 text-right text-orange-600">- ¥ 150.00</td>
-                              <td className="px-6 py-4 text-right text-green-600 font-bold">+ ¥ 9,850.00</td>
-                              <td className="px-6 py-4 text-center">
-                                <button onClick={() => setSelectedSettlementOrderId('O-DEP-88902')} className="text-blue-600 hover:underline text-xs">查看详情</button>
-                              </td>
-                            </tr>
-                            <tr className="hover:bg-zinc-50 border-b border-zinc-100">
-                              <td className="px-6 py-4">
-                                <div className="font-mono text-xs text-blue-600 hover:underline cursor-pointer" onClick={() => setSelectedSettlementOrderId('O-FUL-77234')}>O-FUL-77234</div>
-                                <div className="text-xs text-zinc-400">2024-05-02 11:30</div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className="bg-orange-50 text-orange-600 border border-orange-100 px-2 py-1 text-[10px] font-bold">冻结中</span>
-                              </td>
-                              <td className="px-6 py-4 text-right">¥ 40,000.00</td>
-                              <td className="px-6 py-4 text-right">¥ 10,000.00</td>
-                              <td className="px-6 py-4 text-right text-orange-600">- ¥ 750.00</td>
-                              <td className="px-6 py-4 text-right text-green-600 font-bold">+ ¥ 49,250.00</td>
-                              <td className="px-6 py-4 text-center">
-                                <button onClick={() => setSelectedSettlementOrderId('O-FUL-77234')} className="text-blue-600 hover:underline text-xs">查看详情</button>
-                              </td>
-                            </tr>
-                          </>
-                        ) : (
-                          <>
-                            <tr className="hover:bg-zinc-50 border-b border-zinc-100">
-                              <td className="px-6 py-4">
-                                <div className="font-mono text-xs text-blue-600 hover:underline cursor-pointer" onClick={() => setSelectedSettlementOrderId('O-DEP-88902')}>O-DEP-88902</div>
-                                <div className="text-xs text-zinc-400">2024-05-02 10:15</div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-1 text-[10px] font-bold">已结算</span>
-                              </td>
-                              <td className="px-6 py-4 text-right">¥ 1,500.00</td>
-                              <td className="px-6 py-4 text-right">¥ 500.00</td>
-                              <td className="px-6 py-4 text-right text-orange-600">- ¥ {domesticSettlementMode === 't1' ? '20.00' : '12.00'}</td>
-                              <td className="px-6 py-4 text-right text-green-600 font-bold">+ ¥ {domesticSettlementMode === 't1' ? '1,980.00' : '1,988.00'}</td>
-                              <td className="px-6 py-4 text-center">
-                                <button onClick={() => setSelectedSettlementOrderId('O-DEP-88902')} className="text-blue-600 hover:underline text-xs">查看详情</button>
-                              </td>
-                            </tr>
-                            <tr className="hover:bg-zinc-50 border-b border-zinc-100">
-                              <td className="px-6 py-4">
-                                <div className="font-mono text-xs text-blue-600 hover:underline cursor-pointer" onClick={() => setSelectedSettlementOrderId('O-FUL-77234')}>O-FUL-77234</div>
-                                <div className="text-xs text-zinc-400">2024-05-02 11:30</div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className="bg-orange-50 text-orange-600 border border-orange-100 px-2 py-1 text-[10px] font-bold">冻结中</span>
-                              </td>
-                              <td className="px-6 py-4 text-right">¥ 20,000.00</td>
-                              <td className="px-6 py-4 text-right">¥ 8,900.00</td>
-                              <td className="px-6 py-4 text-right text-orange-600">- ¥ {domesticSettlementMode === 't1' ? '289.00' : '173.40'}</td>
-                              <td className="px-6 py-4 text-right text-green-600 font-bold">+ ¥ {domesticSettlementMode === 't1' ? '28,611.00' : '28,726.60'}</td>
-                              <td className="px-6 py-4 text-center">
-                                <button onClick={() => setSelectedSettlementOrderId('O-FUL-77234')} className="text-blue-600 hover:underline text-xs">查看详情</button>
-                              </td>
-                            </tr>
-                          </>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeFlowTab === 'margin' && activeAccountTab === 'international' && (
-              <div className="space-y-6 animate-in fade-in duration-300">
-                 <div className="flex justify-between items-center bg-white border border-zinc-200 shadow-sm p-4">
-                   <div>
-                     <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
-                       <CreditCard size={18} />
-                       保证金账户流水
-                     </h2>
-                     <div className="text-xs text-zinc-500 mt-1">展示向供应商支付货款，平台税费/运费支付，及资金充值明细</div>
-                   </div>
-                   <button 
-                     onClick={() => setShowRechargeModal(true)}
-                     className="bg-black text-white px-6 py-3 text-xs font-bold hover:bg-zinc-800 transition-colors uppercase tracking-widest"
-                   >
-                     充值
-                   </button>
-                 </div>
-                 <div className="bg-white border border-zinc-200 shadow-sm">
-                   <div className="p-0 overflow-x-auto">
-                     <table className="w-full text-left text-sm min-w-[700px]">
-                       <thead className="bg-zinc-50/50 text-xs text-zinc-500 uppercase">
-                         <tr>
-                            <th className="px-6 py-3 font-bold border-b border-zinc-200">流水号/时间</th>
-                            <th className="px-6 py-3 font-bold border-b border-zinc-200">交易类型</th>
-                            <th className="px-6 py-3 font-bold border-b border-zinc-200">关联信息</th>
-                            <th className="px-6 py-3 font-bold border-b border-zinc-200 text-right">金额</th>
-                            <th className="px-6 py-3 font-bold border-b border-zinc-200">状态</th>
-                         </tr>
-                       </thead>
-                       <tbody>
-                          <tr className="hover:bg-zinc-50 border-b border-zinc-100">
-                             <td className="px-6 py-4">
-                                <div className="font-mono text-xs">DEP-20240503-01</div>
-                                <div className="text-xs text-zinc-400">2024-05-03 14:00</div>
-                             </td>
-                             <td className="px-6 py-4"><span className="bg-blue-50 text-blue-600 px-2 py-1 text-[10px] font-bold">充值资金</span></td>
-                             <td className="px-6 py-4 text-xs text-zinc-500">公对公转入</td>
-                             <td className="px-6 py-4 text-right font-bold text-green-600">+ ¥ 50,000.00</td>
-                             <td className="px-6 py-4"><span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 font-bold">已充值</span></td>
-                          </tr>
-                          <tr className="hover:bg-zinc-50 border-b border-zinc-100">
-                             <td className="px-6 py-4">
-                                <div className="font-mono text-xs">TAX-20240502-05</div>
-                                <div className="text-xs text-zinc-400">2024-05-02 16:30</div>
-                             </td>
-                             <td className="px-6 py-4"><span className="bg-orange-50 text-orange-600 px-2 py-1 text-[10px] font-bold">税和运费结算</span></td>
-                             <td className="px-6 py-4 text-xs font-mono text-blue-600 hover:underline cursor-pointer">O-DEP-88902</td>
-                             <td className="px-6 py-4 text-right font-bold text-orange-600">- ¥ 1,200.00</td>
-                             <td className="px-6 py-4"><span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 font-bold">已扣款</span></td>
-                          </tr>
-                          <tr className="hover:bg-zinc-50 border-b border-zinc-100">
-                             <td className="px-6 py-4">
-                                <div className="font-mono text-xs">B2B-20240502-11</div>
-                                <div className="text-xs text-zinc-400">2024-05-02 11:20</div>
-                             </td>
-                             <td className="px-6 py-4"><span className="bg-purple-50 text-purple-600 px-2 py-1 text-[10px] font-bold">供应商货款支付</span></td>
-                             <td className="px-6 py-4 text-xs font-mono text-blue-600 hover:underline cursor-pointer">O-FUL-77234</td>
-                             <td className="px-6 py-4 text-right font-bold text-orange-600">- ¥ 30,000.00</td>
-                             <td className="px-6 py-4"><span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 font-bold">已支付</span></td>
-                          </tr>
-                          <tr className="hover:bg-zinc-50 border-b border-zinc-100">
-                             <td className="px-6 py-4">
-                                <div className="font-mono text-xs">DEP-20240501-02</div>
-                                <div className="text-xs text-zinc-400">2024-05-01 09:15</div>
-                             </td>
-                             <td className="px-6 py-4"><span className="bg-blue-50 text-blue-600 px-2 py-1 text-[10px] font-bold">充值资金</span></td>
-                             <td className="px-6 py-4 text-xs text-zinc-500">水单已上传</td>
-                             <td className="px-6 py-4 text-right font-bold text-green-600">+ ¥ 20,000.00</td>
-                             <td className="px-6 py-4"><span className="text-[10px] bg-orange-50 text-orange-600 px-2 py-1 font-bold">审核中</span></td>
-                          </tr>
-                       </tbody>
-                     </table>
-                   </div>
-                 </div>
-              </div>
-            )}
+          <div className="w-full">
+             <FinanceProfitLedger />
           </div>
         </div>
       ) : null}
+
 
       {/* Settlement Details Drawer */}
       {selectedSettlementOrderId && (() => {
