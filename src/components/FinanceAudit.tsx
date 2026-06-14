@@ -5,6 +5,8 @@ import {
 import { WorkOrderManagement } from './WorkOrderManagement';
 import { useWorkOrders } from '../lib/workOrderStore';
 
+import { FinanceProfitLedger } from './FinanceProfitLedger';
+
 const MOCK_ORDERS = [
   {
     orderId: "O-DEP-88901",
@@ -133,7 +135,7 @@ const MOCK_ORDERS = [
 ];
 
 export function FinanceAudit() {
-  const [activeMainTab, setActiveMainTab] = useState<'reconciliation' | 'withdrawal' | 'work_order'>('reconciliation');
+  const [activeMainTab, setActiveMainTab] = useState<'reconciliation' | 'withdrawal' | 'work_order' | 'profit_ledger'>('reconciliation');
   const workOrders = useWorkOrders();
   
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -347,6 +349,7 @@ export function FinanceAudit() {
             <span className="bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full leading-none">{workOrders.filter(o => o.status === 'pending').length}</span>
           )}
         </button>
+        <button onClick={() => setActiveMainTab('profit_ledger')} className={`pb-3 text-sm font-bold transition-colors ${activeMainTab === 'profit_ledger' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>利润核算与对账</button>
       </div>
 
       {activeMainTab === 'reconciliation' ? (
@@ -566,6 +569,8 @@ export function FinanceAudit() {
       </>
       ) : activeMainTab === 'work_order' ? (
         <WorkOrderManagement />
+      ) : activeMainTab === 'profit_ledger' ? (
+        <FinanceProfitLedger />
       ) : activeMainTab === 'withdrawal' ? (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
           {/* Account Sub-Tabs */}

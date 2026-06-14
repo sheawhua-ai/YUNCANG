@@ -112,6 +112,8 @@ export function DistributorOrderManagement() {
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [searchType, setSearchType] = useState('订单号');
+  const [searchValue, setSearchValue] = useState('');
   const [filterSupplier, setFilterSupplier] = useState<string | null>(null);
   const [filterBuyer, setFilterBuyer] = useState<string | null>(null);
   const [filterDistributor, setFilterDistributor] = useState<string | null>(null);
@@ -123,7 +125,7 @@ export function DistributorOrderManagement() {
 
   // After-sales state
   const [isAfterSalesModalOpen, setIsAfterSalesModalOpen] = useState(false);
-  const [afterSalesDecision, setAfterSalesDecision] = useState<'refund' | 'exchange' | 'reject' | null>(null);
+  const [afterSalesDecision, setAfterSalesDecision] = useState<'refund' | 'exchange' | 'reject' | 'refund_only' | null>(null);
   const [afterSalesReason, setAfterSalesReason] = useState('');
 
   const handleUpdatePrice = () => {
@@ -172,6 +174,26 @@ export function DistributorOrderManagement() {
     }));
     setNewProgressDesc('');
     setNewProgressAmount('');
+  };
+
+  const handleInitiateAfterSales = (orderId: string, type: 'refund' | 'return') => {
+    setOrders(prev => prev.map(order => 
+      order.id === orderId 
+        ? { 
+            ...order, 
+            status: 'after_sales', 
+            statusLabel: '售后处理',
+            progress: [
+              ...(order.progress || []),
+              { id: `p-${Date.now()}`, time: new Date().toLocaleString(), description: `发起售后申请 - ${type === 'refund' ? '仅退款' : '退货退款'}`, items: '全部', amountChange: '-' }
+            ]
+          } 
+        : order
+    ));
+    if (selectedOrder === orderId) {
+       setSelectedOrder(null);
+    }
+    alert(`已发起${type === 'refund' ? '仅退款' : '退货退款'}售后流程，请在售后处理页签跟进。`);
   };
 
   const handleCreateWorkOrder = () => {
@@ -229,6 +251,26 @@ export function DistributorOrderManagement() {
     if (filterBuyer && order.buyerName !== filterBuyer) return false;
     if (filterDistributor && order.distributorName !== filterDistributor) return false;
 
+    if (searchValue) {
+      const query = searchValue.toLowerCase();
+      if (searchType === '订单号') {
+        if (!order.id.toLowerCase().includes(query)) return false;
+      } else if (searchType === '支付单号') {
+        // Mock checking payment ID, order.id is used as a proxy
+        if (!order.id.toLowerCase().includes(query)) return false;
+      } else if (searchType === '商品名称') {
+        const hasItem = order.items.some(item => item.name.toLowerCase().includes(query));
+        if (!hasItem) return false;
+      } else if (searchType === '货号') {
+        const hasItemInfo = order.items.some(item => item.sku.toLowerCase().includes(query));
+        if (!hasItemInfo) return false;
+      } else if (searchType === '购买人') {
+        if (!order.buyerName?.toLowerCase().includes(query)) return false;
+      } else if (searchType === '收件人') {
+        if (!order.shippingInfo.recipient.toLowerCase().includes(query)) return false;
+      }
+    }
+
     return true;
   });
 
@@ -271,6 +313,33 @@ export function DistributorOrderManagement() {
         </div>
 
         <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+            <div className="w-full md:w-96">
+              <div className="flex border border-zinc-200 bg-white h-10 w-full focus-within:border-black transition-colors shadow-sm">
+                <select 
+                  value={searchType}
+                  onChange={(e) => setSearchType(e.target.value)}
+                  className="bg-zinc-50 outline-none text-xs font-bold px-3 py-2 text-zinc-600 appearance-none cursor-pointer hover:bg-zinc-100 border-r border-zinc-200 min-w-[100px] h-full"
+                  style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23131313%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right .7rem top 50%', backgroundSize: '.65rem auto', paddingRight: '1.5rem' }}
+                >
+                  {['订单号', '支付单号', '商品名称', '货号', '购买人', '收件人'].map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                  <input 
+                    type="text" 
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    placeholder={`输入${searchType}进行搜索...`} 
+                    className="w-full h-full pl-10 pr-4 py-2 text-sm outline-none bg-transparent" 
+                  />
+                </div>
+              </div>
+            </div>
+            {/* Filter tags could go here if needed, in a desktop layout */}
+          </div>
           {(filterSupplier || filterBuyer || filterDistributor) && (
             <div className="flex items-center gap-2 text-xs">
               <span className="text-zinc-500 font-bold">当前筛选:</span>
@@ -427,20 +496,20 @@ export function DistributorOrderManagement() {
                     {(order.status === 'shipped' || order.status === 'delivering' || order.status === 'ready_for_pickup') && (
                       <>
                         <button onClick={(e) => { e.stopPropagation(); alert('订单完结功能开发中'); }} className="text-[10px] font-bold bg-black text-white px-3 py-1.5 hover:bg-zinc-800 transition-colors shadow-sm">订单完结</button>
-                        <button onClick={(e) => { e.stopPropagation(); alert('仅退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">仅退款</button>
-                        <button onClick={(e) => { e.stopPropagation(); alert('退货退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">退货退款</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleInitiateAfterSales(order.id, 'refund'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">仅退款</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleInitiateAfterSales(order.id, 'return'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">退货退款</button>
                       </>
                     )}
                     {order.status === 'after_sales' && (
                       <>
                         <button onClick={(e) => { e.stopPropagation(); alert('订单完结功能开发中'); }} className="text-[10px] font-bold bg-black text-white px-3 py-1.5 hover:bg-zinc-800 transition-colors shadow-sm">订单完结</button>
-                        <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order.id); alert('退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">退款</button>
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedOrder(order.id); setIsAfterSalesModalOpen(true); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">售后处理</button>
                       </>
                     )}
                     {order.status === 'completed' && (
                       <>
-                        <button onClick={(e) => { e.stopPropagation(); alert('退货退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">退货退款</button>
-                        <button onClick={(e) => { e.stopPropagation(); alert('仅退款功能开发中'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">仅退款</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleInitiateAfterSales(order.id, 'return'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">退货退款</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleInitiateAfterSales(order.id, 'refund'); }} className="text-[10px] font-bold border border-zinc-200 px-3 py-1.5 bg-white hover:border-black transition-colors">仅退款</button>
                       </>
                     )}
                     <button 
@@ -844,7 +913,7 @@ export function DistributorOrderManagement() {
             <div className="p-4 md:p-6 border-t border-zinc-200 bg-zinc-50 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:shadow-none">
               <div className="text-xs text-zinc-500 w-full md:w-auto">已选 0 件商品</div>
               <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                {selectedOrderData.status === 'pending_payment' ? (
+                {selectedOrderData.status === 'pending_payment' && (
                   <button 
                     onClick={() => {
                       setTempPrice(selectedOrderData.totalPrice.toString());
@@ -854,13 +923,70 @@ export function DistributorOrderManagement() {
                   >
                     修改订单金额
                   </button>
-                ) : (
-                  <button 
-                    onClick={() => setIsAfterSalesModalOpen(true)}
-                    className="w-full md:w-auto bg-white border border-zinc-200 text-black px-6 py-2 text-xs font-bold uppercase tracking-widest hover:border-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    售后处理
-                  </button>
+                )}
+                {(selectedOrderData.status === 'shipped' || selectedOrderData.status === 'delivering' || selectedOrderData.status === 'ready_for_pickup') && (
+                  <>
+                    <button onClick={() => { handleInitiateAfterSales(selectedOrderData.id, 'refund'); }} className="w-full md:w-auto bg-white border border-zinc-200 text-black px-6 py-2 text-xs font-bold uppercase tracking-widest hover:border-black transition-colors">仅退款</button>
+                    <button onClick={() => { handleInitiateAfterSales(selectedOrderData.id, 'return'); }} className="w-full md:w-auto bg-white border border-zinc-200 text-black px-6 py-2 text-xs font-bold uppercase tracking-widest hover:border-black transition-colors">退货退款</button>
+                  </>
+                )}
+                {selectedOrderData.status === 'completed' && (
+                  <>
+                    <button onClick={() => { handleInitiateAfterSales(selectedOrderData.id, 'refund'); }} className="w-full md:w-auto bg-white border border-zinc-200 text-black px-6 py-2 text-xs font-bold uppercase tracking-widest hover:border-black transition-colors">仅退款</button>
+                    <button onClick={() => { handleInitiateAfterSales(selectedOrderData.id, 'return'); }} className="w-full md:w-auto bg-white border border-zinc-200 text-black px-6 py-2 text-xs font-bold uppercase tracking-widest hover:border-black transition-colors">退货退款</button>
+                  </>
+                )}
+                {selectedOrderData.status === 'after_sales' && (
+                  <>
+                    {selectedOrderData.statusLabel === '售后处理' && (
+                      <button 
+                        onClick={() => setIsAfterSalesModalOpen(true)}
+                        className="w-full md:w-auto bg-white border border-zinc-200 text-black px-6 py-2 text-xs font-bold uppercase tracking-widest hover:border-black transition-colors"
+                      >
+                        售后审批
+                      </button>
+                    )}
+                    {(selectedOrderData.statusLabel === '退款中' || selectedOrderData.statusLabel === '待退款') && (
+                      <button onClick={() => {
+                        const now = new Date().toISOString().replace('T', ' ').slice(0, 16);
+                        setOrders(orders.map(o => o.id === selectedOrderData.id ? { 
+                          ...o, 
+                          status: 'refunded', 
+                          statusLabel: '已退款',
+                          progress: [{ id: `p-${Date.now()}`, time: now, description: '财务退款成功: 原路退回给顾客', items: '相关商品', amountChange: '-' }, ...(o.progress || [])]
+                        } : o));
+                        setSelectedOrder(null);
+                      }} className="w-full md:w-auto bg-green-600 border border-green-600 text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-green-700 transition-colors">
+                        完成退款
+                      </button>
+                    )}
+                    {selectedOrderData.statusLabel === '退货退款中' && (
+                      <button onClick={() => {
+                        const now = new Date().toISOString().replace('T', ' ').slice(0, 16);
+                        setOrders(orders.map(o => o.id === selectedOrderData.id ? { 
+                          ...o, 
+                          statusLabel: '待退款',
+                          progress: [{ id: `p-${Date.now()}`, time: now, description: '供应商收到退货并同意退款', items: '相关商品', amountChange: '-' }, ...(o.progress || [])]
+                        } : o));
+                      }} className="w-full md:w-auto bg-blue-600 border border-blue-600 text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors">
+                        供应商已收退货
+                      </button>
+                    )}
+                    {selectedOrderData.statusLabel === '换货处理中' && (
+                      <button onClick={() => {
+                        const now = new Date().toISOString().replace('T', ' ').slice(0, 16);
+                        setOrders(orders.map(o => o.id === selectedOrderData.id ? { 
+                          ...o, 
+                          status: 'pending_shipment', 
+                          statusLabel: '待发货',
+                          progress: [{ id: `p-${Date.now()}`, time: now, description: '换货完毕，重新生成发货单', items: '换货商品', amountChange: '-' }, ...(o.progress || [])]
+                        } : o));
+                        setSelectedOrder(null);
+                      }} className="w-full md:w-auto bg-purple-600 border border-purple-600 text-white px-6 py-2 text-xs font-bold uppercase tracking-widest hover:bg-purple-700 transition-colors">
+                        换新并重入库发货
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -886,27 +1012,34 @@ export function DistributorOrderManagement() {
 
               <div className="mb-6">
                 <label className="block text-xs font-bold text-zinc-500 mb-3">处理决定</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <button 
+                    onClick={() => setAfterSalesDecision('refund_only')}
+                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'refund_only' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
+                  >
+                    <span className="text-sm font-bold">同意仅退款</span>
+                    <span className="text-[9px] text-zinc-500 leading-tight">拦截发货, 直接退款</span>
+                  </button>
                   <button 
                     onClick={() => setAfterSalesDecision('refund')}
-                    className={`border p-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'refund' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
+                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'refund' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
                   >
                     <span className="text-sm font-bold">同意退货退款</span>
-                    <span className="text-[10px] text-zinc-500">顾客寄回, 仓库验货, 中台退款</span>
+                    <span className="text-[9px] text-zinc-500 leading-tight">寄回后退款</span>
                   </button>
                   <button 
                     onClick={() => setAfterSalesDecision('exchange')}
-                    className={`border p-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'exchange' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
+                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'exchange' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
                   >
                     <span className="text-sm font-bold">同意换货</span>
-                    <span className="text-[10px] text-zinc-500">顾客寄回, 仓库验货并发出新货</span>
+                    <span className="text-[9px] text-zinc-500 leading-tight">寄回后换新</span>
                   </button>
                   <button 
                     onClick={() => setAfterSalesDecision('reject')}
-                    className={`border p-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'reject' ? 'border-red-600 border-2 bg-red-50' : 'border-zinc-200 hover:border-red-500'}`}
+                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'reject' ? 'border-red-600 border-2 bg-red-50' : 'border-zinc-200 hover:border-red-500'}`}
                   >
                     <span className="text-sm font-bold">驳回申请</span>
-                    <span className="text-[10px] text-zinc-500">拒绝此次售后请求</span>
+                    <span className="text-[9px] text-zinc-500 leading-tight">拒绝此次请求</span>
                   </button>
                 </div>
               </div>
@@ -923,7 +1056,7 @@ export function DistributorOrderManagement() {
                 </div>
               )}
 
-              {(afterSalesDecision === 'refund' || afterSalesDecision === 'exchange') && (
+              {(afterSalesDecision === 'refund_only' || afterSalesDecision === 'refund' || afterSalesDecision === 'exchange') && (
                 <div className="mb-6">
                   <label className="block text-xs font-bold text-zinc-500 mb-2">处理备注 (内部可见)</label>
                   <textarea 
@@ -947,7 +1080,7 @@ export function DistributorOrderManagement() {
                   onClick={() => {
                     if (!selectedOrderData || !afterSalesDecision) return;
                     
-                    const actionText = afterSalesDecision === 'refund' ? '同意退货退款' : afterSalesDecision === 'exchange' ? '同意换货' : '驳回售后申请';
+                    const actionText = afterSalesDecision === 'refund_only' ? '同意仅退款' : afterSalesDecision === 'refund' ? '同意退货退款' : afterSalesDecision === 'exchange' ? '同意换货' : '驳回售后申请';
                     const newProgress = {
                       id: `p${Date.now()}`,
                       time: new Date().toLocaleString('zh-CN', { hour12: false }),
@@ -961,7 +1094,7 @@ export function DistributorOrderManagement() {
                         return {
                           ...o,
                           status: afterSalesDecision === 'reject' ? o.status : 'refunded', // Simple state update for demo
-                          statusLabel: afterSalesDecision === 'refund' ? '退款中' : afterSalesDecision === 'exchange' ? '换货处理中' : o.statusLabel,
+                          statusLabel: afterSalesDecision === 'refund_only' ? '退款中' : afterSalesDecision === 'refund' ? '退货退款中' : afterSalesDecision === 'exchange' ? '换货处理中' : o.statusLabel,
                           progress: [newProgress, ...(o.progress || [])]
                         };
                       }
