@@ -571,8 +571,8 @@ export function ProductManagement() {
                           <th className="p-4 font-bold">规格 (尺码)</th>
                           <th className="p-4 font-bold">所在仓库</th>
                           <th className="p-4 font-bold">条码 (Barcode)</th>
-                          <th className="p-4 font-bold text-right bg-blue-50/30">大陆零售价 (CNY)</th>
-                          <th className="p-4 font-bold text-right bg-orange-50/30">香港零售价 (HKD)</th>
+                          <th className="p-4 font-bold text-right bg-blue-50/30">大陆零售价 (¥)</th>
+                          <th className="p-4 font-bold text-right bg-orange-50/30">香港零售价 (HK$)</th>
                           <th className="p-4 font-bold text-right">零售库存</th>
                           <th className="p-4 font-bold text-right">供货价</th>
                           <th className="p-4 font-bold text-right">供货库存</th>

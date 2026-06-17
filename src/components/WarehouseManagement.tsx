@@ -238,7 +238,7 @@ export function WarehouseManagement() {
                   <th className="p-4">发货仓库</th>
                   <th className="p-4">商品类目</th>
                   <th className="p-4">目的地</th>
-                  <th className="p-4 text-center">每件运费 (CNY)</th>
+                  <th className="p-4 text-center">每件运费 (¥)</th>
                   <th className="p-4 text-right">操作</th>
                 </tr>
               </thead>

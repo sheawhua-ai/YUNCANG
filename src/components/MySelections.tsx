@@ -437,7 +437,7 @@ export function MySelections() {
                                 type="number" 
                                 value={fixedPriceHkd}
                                 onChange={(e) => handleFixedPriceHkdChange(e.target.value)}
-                                placeholder="HKD金额" 
+                                placeholder="HK$金额" 
                                 className="w-full border border-zinc-200 px-3 py-2 text-sm font-bold focus:border-black focus:ring-0 outline-none" 
                              />
                            </div>

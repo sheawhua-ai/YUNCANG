@@ -51,7 +51,7 @@ const MOCK_ORDERS = [
     ],
     progress: [
       { id: '1', time: '2024-05-02 09:00', description: '买家上传定金水单', amountChange: '-' },
-      { id: '2', time: '2024-05-02 10:15', description: '财务核销定金', amountChange: '+¥2,000' }
+      { id: '2', time: '2024-05-02 10:15', description: '财务核销定金', amountChange: '+HK$2,000' }
     ]
   },
   {
@@ -134,8 +134,38 @@ const MOCK_ORDERS = [
   }
 ];
 
+const MOCK_FROZEN_RECORDS = [
+  { id: 'O-20240615-01', orderId: 'O-DOM-042', paid: 15200, share: 15000, fee: 152, actualRecorded: 14848, status: '冻结中 (待发货)' },
+  { id: 'O-20240615-02', orderId: 'O-DOM-045', paid: 28500, share: 28000, fee: 285, actualRecorded: 27715, status: '冻结中 (已发货)' },
+  { id: 'O-20240615-03', orderId: 'O-INT-099', paid: 12500, share: 12000, fee: 187.5, actualRecorded: 11812.5, status: '冻结中 (待结算)' },
+];
+
+const MOCK_SETTLED_RECORDS = [
+  {
+    date: '2024-06-14',
+    totalSettled: 42500,
+    orders: [
+      { id: 'O-20240614-01', orderId: 'O-DOM-039', paid: 12000, share: 11500, fee: 120, actualRecorded: 11380, status: '已结算' },
+      { id: 'O-20240614-02', orderId: 'O-DOM-040', paid: 30500, share: 30000, fee: 305, actualRecorded: 29695, status: '已结算' },
+    ]
+  },
+  {
+    date: '2024-06-13',
+    totalSettled: 18450,
+    orders: [
+      { id: 'O-20240613-01', orderId: 'O-DOM-031', paid: 18450, share: 18000, fee: 184.5, actualRecorded: 17815.5, status: '已结算' },
+    ]
+  }
+];
+
+const MOCK_MARGIN_RECORDS = [
+  { id: 'M-1', date: '2024-06-15 14:30', type: '扣款', description: 'O-DOM-042 B2B采购款', amount: -12000, balance: 25000 },
+  { id: 'M-2', date: '2024-06-14 09:15', type: '扣款', description: '中转仓运费结算', amount: -350, balance: 37000 },
+  { id: 'M-3', date: '2024-06-10 11:00', type: '充值', description: '对公转账充值', amount: 50000, balance: 37350 },
+];
+
 export function FinanceAudit() {
-  const [activeMainTab, setActiveMainTab] = useState<'reconciliation' | 'withdrawal' | 'work_order' | 'profit_ledger'>('reconciliation');
+  const [activeMainTab, setActiveMainTab] = useState<'reconciliation' | 'withdrawal' | 'work_order' | 'profit_ledger' | 'funds_account'>('reconciliation');
   const workOrders = useWorkOrders();
   
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -147,9 +177,8 @@ export function FinanceAudit() {
   const [manualSlipOrder, setManualSlipOrder] = useState<string | null>(null);
 
   const getCurrencySymbol = (orderId: string) => {
-    // In a real app we'd check order.warehouse. For now, we simulate based on ID or defaults
-    if (orderId.includes('DEP')) return 'HK$';
-    if (orderId.includes('FUL')) return '€';
+    // International orders use HK$, domestic use ¥
+    if (orderId.includes('-OS-') || orderId.includes('-INT-') || orderId.includes('DEP')) return 'HK$';
     return '¥';
   };
   
@@ -334,15 +363,12 @@ export function FinanceAudit() {
             <p className="text-xs md:text-sm text-zinc-500">按订单维度核对银行转账汇款及提现管理</p>
           </div>
         </div>
-        <div className="bg-zinc-100 text-zinc-600 px-4 py-2 rounded-md flex items-center gap-2 text-xs md:text-sm">
-          <Info size={16} className="text-zinc-400 shrink-0" />
-          当前版本仅支持银行转账核销
-        </div>
       </div>
 
       <div className="flex gap-8 border-b border-zinc-200 mb-6 overflow-x-auto no-scrollbar whitespace-nowrap">
         <button onClick={() => setActiveMainTab('reconciliation')} className={`pb-3 text-sm font-bold transition-colors ${activeMainTab === 'reconciliation' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>收款核销</button>
         <button onClick={() => setActiveMainTab('profit_ledger')} className={`pb-3 text-sm font-bold transition-colors ${activeMainTab === 'profit_ledger' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>对账与利润核算</button>
+        <button onClick={() => setActiveMainTab('funds_account')} className={`pb-3 text-sm font-bold transition-colors ${activeMainTab === 'funds_account' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>资金账户明细</button>
         <button onClick={() => setActiveMainTab('work_order')} className={`pb-3 text-sm font-bold transition-colors flex items-center gap-1 ${activeMainTab === 'work_order' ? 'text-black border-b-2 border-black' : 'text-zinc-500 hover:text-black'}`}>
           工单处理
           {workOrders.filter(o => o.status === 'pending').length > 0 && (
@@ -569,6 +595,10 @@ export function FinanceAudit() {
       ) : activeMainTab === 'work_order' ? (
         <WorkOrderManagement />
       ) : activeMainTab === 'profit_ledger' ? (
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+           <FinanceProfitLedger />
+        </div>
+      ) : activeMainTab === 'funds_account' ? (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
           {/* Account Sub-Tabs */}
           <div className="flex gap-6 border-b border-zinc-200">
@@ -589,84 +619,43 @@ export function FinanceAudit() {
           </div>
 
           {activeAccountTab === 'international' ? (
-            <div className="bg-white border border-zinc-200 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-black uppercase tracking-widest">国际账户结算规则</h2>
-              </div>
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="bg-zinc-50 p-4 border border-zinc-200 flex-1">
-                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">当前结算周期</div>
-                  <div className="text-lg font-bold">自动结算</div>
-                  <div className="text-xs text-zinc-500 mt-1">按周期自动计算可提现金额并结算</div>
-                </div>
-                <div className="bg-zinc-50 p-4 border border-zinc-200 flex-1">
-                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">交易手续费</div>
-                  <div className="text-lg font-bold text-orange-600">1.5%</div>
-                  <div className="text-xs text-zinc-500 mt-1">国际账户固定费率</div>
-                </div>
+            <div className="bg-blue-50/50 border border-blue-100 p-4 text-xs flex items-start gap-2">
+              <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-blue-800">国际账户结算提示：</span> 按周期自动结算，每笔交易扣除 1.5% 固定手续费。
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-zinc-200 p-6 shadow-sm">
-              <div className="flex flex-col mb-4">
-                <h2 className="text-sm font-black uppercase tracking-widest mb-2">国内账户结算规则</h2>
-                <div className="text-xs text-zinc-500">
-                  开启或关闭极速结算，修改每月限 1 次。设置的规则将于<span className="font-bold text-black border-b border-black md:mx-1">次日</span>针对新产生的订单生效。
+            <div className="bg-blue-50/50 border border-blue-100 p-4 text-xs flex items-center justify-between gap-4">
+              <div className="flex items-start gap-2">
+                <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-blue-800">国内账户极速结算模式：</span> 当前处于 T+{domesticSettlementMode === 't1' ? '1' : '7'} 结算周期，手续费率 {domesticSettlementMode === 't1' ? '1.0%' : '0.6%'}。每月限改一次。
+                  {lastModeChangeDate && <span className="text-zinc-500 ml-2">上次修改: {lastModeChangeDate}</span>}
                 </div>
               </div>
               
-              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-zinc-50 p-4 border border-zinc-200 mb-4">
-                <div>
-                  <div className="font-bold mb-1 flex items-center gap-2">
-                    开启极速结算 (T+1)
-                    {domesticSettlementMode === 't1' && <span className="text-[10px] bg-green-100 text-green-800 px-2 py-0.5 rounded-sm">开启中</span>}
-                  </div>
-                  <div className="text-xs text-zinc-500">
-                    默认 T+7 结算 (收货后+7天, 费率0.6%)。开启极速结算后，订单<span className="font-bold">揽收后+1天</span>即可结算，费率为 1.0%。
-                  </div>
-                </div>
-                <div className="shrink-0">
-                  <label className="relative flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
-                      checked={domesticSettlementMode === 't1'}
-                      onChange={(e) => {
-                        const newMode = e.target.checked ? 't1' : 't7';
-                        setDomesticSettlementMode(newMode);
-                        const today = new Date();
-                        setLastModeChangeDate(`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
-                      }}
-                    />
-                    <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
-                  </label>
-                </div>
-              </div>
-
-              {lastModeChangeDate && (
-                <div className="text-[10px] text-zinc-400 mb-4 flex items-center gap-1">
-                  上次修改日期: {lastModeChangeDate}。本自然月内不可再次修改。
-                </div>
-              )}
-
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="bg-zinc-50 p-4 border border-zinc-200 flex-1 transition-all">
-                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">当前结算周期</div>
-                  <div className="text-lg font-bold">{domesticSettlementMode === 't1' ? 'T+1' : 'T+7'}</div>
-                  <div className="text-xs text-zinc-500 mt-1">
-                    {domesticSettlementMode === 't1' ? '揽收后 +1 天自动结算' : '收货后 +7 天自动结算'}
-                  </div>
-                </div>
-                <div className="bg-zinc-50 p-4 border border-zinc-200 flex-1 transition-all">
-                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">当前交易手续费</div>
-                  <div className="text-lg font-bold text-orange-600">{domesticSettlementMode === 't1' ? '1.0%' : '0.6%'}</div>
-                  <div className="text-xs text-zinc-500 mt-1">从结算款中扣除</div>
-                </div>
+              <div className="shrink-0 flex items-center gap-2">
+                <span className="font-bold text-[10px] uppercase text-blue-800">开启极速结算 (T+1)</span>
+                <label className="relative flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={domesticSettlementMode === 't1'}
+                    onChange={(e) => {
+                      const newMode = e.target.checked ? 't1' : 't7';
+                      setDomesticSettlementMode(newMode);
+                      const today = new Date();
+                      setLastModeChangeDate(`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
+                    }}
+                  />
+                  <div className="w-9 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
               </div>
             </div>
           )}
 
-          <div className={`grid grid-cols-1 ${activeAccountTab === 'international' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4 md:gap-6`}>
+          <div className={`grid grid-cols-1 gap-4 md:gap-6 ${activeAccountTab === 'international' ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
             {activeAccountTab === 'international' && (
               <div className="bg-white border border-zinc-200 p-6 flex flex-col">
                 <div className="flex justify-between items-start mb-2">
@@ -678,13 +667,13 @@ export function FinanceAudit() {
                     查看明细
                   </button>
                 </div>
-                <div className="text-2xl md:text-3xl font-black mb-2">¥ 25,000.00</div>
-                <div className="text-xs text-zinc-400 mt-auto">用于支付B2B结算，运费和税费结算</div>
+                <div className="text-2xl md:text-3xl font-black mb-2">HK$ 25,000.00</div>
+                <div className="text-xs text-zinc-400 mt-auto">用于抵扣供货商货款，跨境运费和关税结算</div>
               </div>
             )}
             <div className="bg-white border border-zinc-200 p-6 flex flex-col">
               <div className="flex justify-between items-start mb-2">
-                <div className="text-sm font-bold text-zinc-500">冻结中资金</div>
+                <div className="text-sm font-bold text-zinc-500">待结算资金</div>
                 <button 
                   onClick={() => setActiveDetailModal('frozen')}
                   className="text-xs text-blue-600 hover:underline"
@@ -692,15 +681,15 @@ export function FinanceAudit() {
                   查看明细
                 </button>
               </div>
-              <div className="text-2xl md:text-3xl font-black text-orange-600 mb-4">¥ {activeAccountTab === 'domestic' ? '12,500.00' : '85,000.00'}</div>
+              <div className="text-2xl md:text-3xl font-black text-orange-600 mb-4">{activeAccountTab === 'international' ? 'HK$' : '¥'} {activeAccountTab === 'domestic' ? '12,500.00' : '85,000.00'}</div>
               <div className="grid grid-cols-2 gap-4 mt-auto p-3 bg-zinc-50 border border-zinc-100">
                 <div>
-                  <div className="text-[10px] text-zinc-500 mb-1">冻结货款</div>
-                  <div className="font-bold">¥ {activeAccountTab === 'domestic' ? '10,000.00' : '70,000.00'}</div>
+                  <div className="text-[10px] text-zinc-500 mb-1">待结算货款</div>
+                  <div className="font-bold">{activeAccountTab === 'international' ? 'HK$' : '¥'} {activeAccountTab === 'domestic' ? '10,000.00' : '70,000.00'}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-zinc-500 mb-1">冻结佣金</div>
-                  <div className="font-bold">¥ {activeAccountTab === 'domestic' ? '2,500.00' : '15,000.00'}</div>
+                  <div className="text-[10px] text-zinc-500 mb-1">待结算佣金</div>
+                  <div className="font-bold">{activeAccountTab === 'international' ? 'HK$' : '¥'} {activeAccountTab === 'domestic' ? '2,500.00' : '15,000.00'}</div>
                 </div>
               </div>
             </div>
@@ -714,22 +703,18 @@ export function FinanceAudit() {
                   查看明细
                 </button>
               </div>
-              <div className="text-2xl md:text-3xl font-black text-green-600 mb-4">¥ {activeAccountTab === 'domestic' ? '43,200.00' : '285,000.00'}</div>
+              <div className="text-2xl md:text-3xl font-black text-green-600 mb-4">{activeAccountTab === 'international' ? 'HK$' : '¥'} {activeAccountTab === 'domestic' ? '43,200.00' : '285,000.00'}</div>
               <div className="grid grid-cols-2 gap-4 mt-auto p-3 bg-zinc-50 border border-zinc-100">
                 <div>
                   <div className="text-[10px] text-zinc-500 mb-1">结算货款</div>
-                  <div className="font-bold">¥ {activeAccountTab === 'domestic' ? '35,000.00' : '240,000.00'}</div>
+                  <div className="font-bold">{activeAccountTab === 'international' ? 'HK$' : '¥'} {activeAccountTab === 'domestic' ? '35,000.00' : '240,000.00'}</div>
                 </div>
                 <div>
                   <div className="text-[10px] text-zinc-500 mb-1">结算佣金</div>
-                  <div className="font-bold">¥ {activeAccountTab === 'domestic' ? '8,200.00' : '45,000.00'}</div>
+                  <div className="font-bold">{activeAccountTab === 'international' ? 'HK$' : '¥'} {activeAccountTab === 'domestic' ? '8,200.00' : '45,000.00'}</div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="w-full">
-             <FinanceProfitLedger />
           </div>
         </div>
       ) : null}
@@ -786,7 +771,7 @@ export function FinanceAudit() {
                         <div className="text-zinc-500 font-mono text-[10px]">SKU: {product.sku}</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold">¥ {product.price.toLocaleString()}</div>
+                        <div className="font-bold">{getCurrencySymbol(order.orderId)} {product.price.toLocaleString()}</div>
                         <div className="text-zinc-500">x {product.qty}</div>
                       </div>
                     </div>
@@ -858,7 +843,7 @@ export function FinanceAudit() {
                             <div className="text-zinc-500 font-mono text-[10px]">SKU: {product.sku}</div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold">¥ {product.price.toLocaleString()}</div>
+                            <div className="font-bold">{getCurrencySymbol(order.orderId)} {product.price.toLocaleString()}</div>
                             <div className="text-zinc-500">x {product.qty}</div>
                           </div>
                         </div>
@@ -874,9 +859,9 @@ export function FinanceAudit() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div className="bg-white border border-zinc-200 p-4">
                           <div className="text-xs text-zinc-500 mb-1">订单总应付</div>
-                          <div className="text-xl font-black">¥ {totalDue.toLocaleString()}</div>
+                          <div className="text-xl font-black">{getCurrencySymbol(order.orderId)} {totalDue.toLocaleString()}</div>
                           <div className="text-[10px] text-zinc-400 mt-2">
-                            定金: ¥{order.depositDue.toLocaleString()} | 尾款: ¥{order.balanceDue.toLocaleString()}
+                            定金: {getCurrencySymbol(order.orderId)}{order.depositDue.toLocaleString()} | 尾款: {getCurrencySymbol(order.orderId)}{order.balanceDue.toLocaleString()}
                           </div>
                         </div>
                         <div className="bg-white border border-zinc-200 p-4">
@@ -1059,7 +1044,7 @@ export function FinanceAudit() {
       {viewingWorkOrderAssociated && (() => {
         const orderInfo = ordersData.find(o => o.orderId === viewingWorkOrderAssociated);
         const progressList = orderInfo?.progress || [
-          { id: '1', time: '2024-05-10 10:00', description: '买家付款', amountChange: '+¥28,000' },
+          { id: '1', time: '2024-05-10 10:00', description: '买家付款', amountChange: `+${getCurrencySymbol(viewingWorkOrderAssociated)}28,000` },
           { id: '2', time: '2024-05-11 11:30', description: '供货商确认部分商品', amountChange: '-' }
         ];
         return (
@@ -1123,28 +1108,106 @@ export function FinanceAudit() {
               <div>
                 <h2 className="text-lg md:text-xl font-black uppercase tracking-tight mb-1">
                   {activeDetailModal === 'margin' ? '保证金账户明细' : 
-                   activeDetailModal === 'frozen' ? '冻结中资金明细' : '已结算订单明细'}
+                   activeDetailModal === 'frozen' ? '待结算资金明细' : '已结算订单明细'}
                 </h2>
               </div>
               <button onClick={() => setActiveDetailModal(null)} className="text-zinc-400 hover:text-black transition-colors"><X size={24} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 md:p-8">
               {activeDetailModal === 'margin' && (
-                <div className="text-center py-20 text-zinc-500">
-                  <Package size={32} className="mx-auto mb-4 opacity-50" />
-                  展示支付B2B结算、运费和税费结算记录。
+                <div className="bg-white border border-zinc-200">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-zinc-50 border-b border-zinc-200 text-[11px] text-zinc-500 uppercase tracking-widest">
+                      <tr>
+                        <th className="px-4 py-3 font-bold">时间</th>
+                        <th className="px-4 py-3 font-bold">类型</th>
+                        <th className="px-4 py-3 font-bold">事由</th>
+                        <th className="px-4 py-3 font-bold text-right">金额 ({activeAccountTab === 'international' ? 'HK$' : '¥'})</th>
+                        <th className="px-4 py-3 font-bold text-right">余额 ({activeAccountTab === 'international' ? 'HK$' : '¥'})</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {MOCK_MARGIN_RECORDS.map(record => (
+                        <tr key={record.id} className="hover:bg-zinc-50 transition-colors">
+                          <td className="px-4 py-3 text-zinc-500 text-xs">{record.date}</td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[10px] px-1.5 py-0.5 font-bold ${record.type === '充值' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {record.type}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-bold">{record.description}</td>
+                          <td className={`px-4 py-3 text-right font-bold ${record.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {record.amount > 0 ? '+' : ''}{record.amount.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-zinc-500">{record.balance.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
               {activeDetailModal === 'frozen' && (
-                <div className="text-center py-20 text-zinc-500">
-                  <Clock size={32} className="mx-auto mb-4 opacity-50" />
-                  展示即将到账并且尚未完成结算周期的订单资金明细，包括冻结中的货款和佣金记录。
+                <div className="bg-white border border-zinc-200">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-zinc-50 border-b border-zinc-200 text-[11px] text-zinc-500 uppercase tracking-widest">
+                      <tr>
+                        <th className="px-4 py-3 font-bold">订单编号</th>
+                        <th className="px-4 py-3 font-bold text-right">支付金额</th>
+                        <th className="px-4 py-3 font-bold text-right text-purple-600">分账金额</th>
+                        <th className="px-4 py-3 font-bold text-right text-orange-600">手续费</th>
+                        <th className="px-4 py-3 font-bold text-right text-emerald-600">计入账</th>
+                        <th className="px-4 py-3 font-bold text-right">状态</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {MOCK_FROZEN_RECORDS.filter(r => activeAccountTab === 'international' ? r.orderId.includes('INT') : !r.orderId.includes('INT')).map(record => (
+                        <tr key={record.id} className="hover:bg-zinc-50 transition-colors">
+                          <td className="px-4 py-3 font-mono font-bold text-xs">{record.orderId}</td>
+                          <td className="px-4 py-3 text-right font-bold">{activeAccountTab === 'international' ? 'HK$' : '¥'} {record.paid.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right font-bold text-purple-700">{activeAccountTab === 'international' ? 'HK$' : '¥'} {record.share.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right font-bold text-orange-700">{activeAccountTab === 'international' ? 'HK$' : '¥'} {record.fee.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right font-black text-emerald-700">{activeAccountTab === 'international' ? 'HK$' : '¥'} {record.actualRecorded.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 text-zinc-600 font-bold">{record.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
               {activeDetailModal === 'settled' && (
-                <div className="text-center py-20 text-zinc-500">
-                  <CheckCircle2 size={32} className="mx-auto mb-4 opacity-50" />
-                  展示已经完成货款和佣金结算的订单明细记录。
+                <div className="space-y-6">
+                  {MOCK_SETTLED_RECORDS.map((dayGroup, idx) => (
+                    <div key={idx} className="bg-white border border-zinc-200">
+                      <div className="bg-zinc-50 border-b border-zinc-200 p-4 flex justify-between items-center">
+                        <div className="font-bold">{dayGroup.date} 结算汇总</div>
+                        <div className="text-sm font-black text-emerald-600">已结算: {activeAccountTab === 'international' ? 'HK$' : '¥'}{dayGroup.totalSettled.toLocaleString()}</div>
+                      </div>
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-white border-b border-zinc-100 text-[11px] text-zinc-400 uppercase tracking-widest">
+                          <tr>
+                            <th className="px-4 py-2 font-bold">订单编号</th>
+                            <th className="px-4 py-2 font-bold text-right">支付金额</th>
+                            <th className="px-4 py-2 font-bold text-right text-purple-600">分账金额</th>
+                            <th className="px-4 py-2 font-bold text-right text-orange-600">手续费</th>
+                            <th className="px-4 py-2 font-bold text-right text-emerald-600">实际入账</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-50">
+                          {dayGroup.orders.filter(r => activeAccountTab === 'international' ? r.orderId.includes('INT') : !r.orderId.includes('INT')).map(record => (
+                            <tr key={record.id} className="hover:bg-zinc-50 transition-colors">
+                              <td className="px-4 py-2 font-mono font-bold text-xs">{record.orderId}</td>
+                              <td className="px-4 py-2 text-right">{activeAccountTab === 'international' ? 'HK$' : '¥'} {record.paid.toLocaleString()}</td>
+                              <td className="px-4 py-2 text-right text-purple-700">{activeAccountTab === 'international' ? 'HK$' : '¥'} {record.share.toLocaleString()}</td>
+                              <td className="px-4 py-2 text-right text-orange-700">{activeAccountTab === 'international' ? 'HK$' : '¥'} {record.fee.toLocaleString()}</td>
+                              <td className="px-4 py-2 text-right font-bold text-emerald-700">{activeAccountTab === 'international' ? 'HK$' : '¥'} {record.actualRecorded.toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -1195,7 +1258,7 @@ export function FinanceAudit() {
               </div>
               
               <div className="mb-6">
-                <label className="block text-xs font-bold mb-2">充值金额 (¥)</label>
+                <label className="block text-xs font-bold mb-2">充值金额 ({activeAccountTab === 'international' ? 'HK$' : '¥'})</label>
                 <input type="number" placeholder="请输入打款金额" className="w-full border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-0 outline-none" />
               </div>
 
