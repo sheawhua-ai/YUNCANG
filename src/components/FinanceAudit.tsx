@@ -668,7 +668,15 @@ export function FinanceAudit() {
                   </button>
                 </div>
                 <div className="text-2xl md:text-3xl font-black mb-2">HK$ 25,000.00</div>
-                <div className="text-xs text-zinc-400 mt-auto">用于抵扣供货商货款，跨境运费和关税结算</div>
+                <div className="flex justify-between items-end mt-auto">
+                  <div className="text-xs text-zinc-400 max-w-[200px]">用于抵扣供货商货款，跨境运费和关税结算</div>
+                  <button 
+                    onClick={() => setShowRechargeModal(true)} 
+                    className="px-3 py-1.5 bg-black text-white hover:bg-zinc-800 text-xs font-bold transition-colors shrink-0"
+                  >
+                    充值
+                  </button>
+                </div>
               </div>
             )}
             <div className="bg-white border border-zinc-200 p-6 flex flex-col">
@@ -1111,7 +1119,17 @@ export function FinanceAudit() {
                    activeDetailModal === 'frozen' ? '待结算资金明细' : '已结算订单明细'}
                 </h2>
               </div>
-              <button onClick={() => setActiveDetailModal(null)} className="text-zinc-400 hover:text-black transition-colors"><X size={24} /></button>
+              <div className="flex items-center gap-4">
+                {activeDetailModal === 'margin' && (
+                  <button 
+                    onClick={() => setShowRechargeModal(true)} 
+                    className="px-4 py-2 bg-black text-white text-xs font-bold hover:bg-zinc-800 transition-colors"
+                  >
+                    充值
+                  </button>
+                )}
+                <button onClick={() => setActiveDetailModal(null)} className="text-zinc-400 hover:text-black transition-colors"><X size={24} /></button>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 md:p-8">
               {activeDetailModal === 'margin' && (
