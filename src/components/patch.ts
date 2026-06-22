@@ -1,12 +1,11 @@
-import fs from 'fs';
-let code = fs.readFileSync('./src/components/OrderManagement.tsx', 'utf-8');
+import * as fs from 'fs';
 
-// replace pending_refund strings in tabs and labels
-code = code.replace(/pending_refund/g, 'after_sales');
-code = code.replace(/'待售后'/g, "'售后处理'");
-code = code.replace(/'待退款'/g, "'售后处理'");
-code = code.replace(/>待退款</g, ">售后处理<");
-code = code.replace(/申请退款/g, "申请售后");
-code = code.replace(/已退款/g, "售后已完成");
+const p = 'src/components/OfferToMarketplace.tsx';
+let content = fs.readFileSync(p, 'utf-8');
 
-fs.writeFileSync('./src/components/OrderManagement.tsx', code);
+const matchIndex = content.indexOf('{/* Manual Match Modal */}');
+if (matchIndex > -1) {
+  content = content.substring(0, matchIndex) + '    </div>\n  );\n}\n';
+  fs.writeFileSync(p, content);
+  console.log('Modals removed');
+}

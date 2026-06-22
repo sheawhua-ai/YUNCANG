@@ -1,5 +1,6 @@
 import { Search, ChevronRight, X, FileText, Truck, Wrench, CheckCircle, Check } from "lucide-react";
 import { useState } from "react";
+import { SearchableCombobox } from "./SearchableCombobox";
 import { workOrderStore } from '../lib/workOrderStore';
 
 const INITIAL_ORDERS = [
@@ -338,29 +339,23 @@ export function DistributorOrderManagement() {
                 </div>
               </div>
             </div>
-            {/* Filter tags could go here if needed, in a desktop layout */}
-          </div>
-          {(filterSupplier || filterBuyer || filterDistributor) && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-zinc-500 font-bold">当前筛选:</span>
-              {filterSupplier && (
-                <span className="bg-zinc-200 text-zinc-800 px-2 py-1 flex items-center gap-1">
-                  供应商/货主: {filterSupplier} <X size={12} className="cursor-pointer hover:text-black" onClick={() => setFilterSupplier(null)} />
-                </span>
-              )}
-              {filterBuyer && (
-                <span className="bg-zinc-200 text-zinc-800 px-2 py-1 flex items-center gap-1">
-                  买家: {filterBuyer} <X size={12} className="cursor-pointer hover:text-black" onClick={() => setFilterBuyer(null)} />
-                </span>
-              )}
-              {filterDistributor && (
-                <span className="bg-zinc-200 text-zinc-800 px-2 py-1 flex items-center gap-1">
-                  主理人: {filterDistributor} <X size={12} className="cursor-pointer hover:text-black" onClick={() => setFilterDistributor(null)} />
-                </span>
-              )}
-              <button onClick={() => { setFilterSupplier(null); setFilterBuyer(null); setFilterDistributor(null); }} className="text-zinc-500 hover:text-black hover:underline ml-2">清除全部</button>
+            <div className="flex gap-4 flex-wrap">
+              <SearchableCombobox 
+                options={Array.from(new Set(INITIAL_ORDERS.map(o => o.supplierName).filter(Boolean))).map(m => ({ value: m as string, label: m as string }))}
+                value={filterSupplier || ''}
+                onChange={(val) => setFilterSupplier(val || null)}
+                placeholder="所有供货商"
+                className="w-40"
+              />
+              <SearchableCombobox 
+                options={Array.from(new Set(INITIAL_ORDERS.map(o => o.distributorName).filter(Boolean))).map(m => ({ value: m as string, label: m as string }))}
+                value={filterDistributor || ''}
+                onChange={(val) => setFilterDistributor(val || null)}
+                placeholder="所有主理人"
+                className="w-40"
+              />
             </div>
-          )}
+          </div>
         </div>
 
         <div className="bg-white border border-zinc-200 shadow-sm">
@@ -398,10 +393,7 @@ export function DistributorOrderManagement() {
                   </div>
                 </div>
                 {order.distributorName && (
-                  <span 
-                    className="text-[10px] text-blue-600 md:ml-4 cursor-pointer hover:underline"
-                    onClick={() => setFilterDistributor(order.distributorName!)}
-                  >
+                  <span className="text-[10px] text-blue-600 md:ml-4">
                     主理人: {order.distributorName} (ID: {order.id.slice(-4)})
                   </span>
                 )}
@@ -437,10 +429,7 @@ export function DistributorOrderManagement() {
                   </div>
                   <div className="md:col-span-1 text-center">
                     <div className="text-xs text-zinc-500 md:hidden mb-1 font-bold italic">供货商/履约方式</div>
-                    <div 
-                      className="text-[10px] font-bold mb-1 text-blue-600 cursor-pointer hover:underline"
-                      onClick={() => setFilterSupplier(order.supplierName)}
-                    >
+                    <div className="text-[10px] font-bold mb-1 text-blue-600">
                       {order.supplierName}
                     </div>
                     <div className="text-[10px] text-zinc-500">

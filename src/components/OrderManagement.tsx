@@ -1,5 +1,6 @@
 import { Search, ChevronRight, X, Package, Truck, CheckCircle, AlertCircle, Download, Upload, FileText, Check, Info, Image, Wrench } from "lucide-react";
 import { useState } from "react";
+import { SearchableCombobox } from "./SearchableCombobox";
 import { workOrderStore } from '../lib/workOrderStore';
 
 const INITIAL_ORDERS = [
@@ -715,32 +716,44 @@ export function OrderManagement() {
                   </div>
                 </div>
               </div>
-              {(filterManager || filterDistributor || filterDelivery || filterWarehouse) && (
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-zinc-500 font-bold">当前筛选:</span>
-                  {filterManager && (
-                    <span className="bg-zinc-200 text-zinc-800 px-2 py-1 flex items-center gap-1">
-                      主理人: {filterManager} <X size={12} className="cursor-pointer hover:text-black" onClick={() => setFilterManager(null)} />
-                    </span>
-                  )}
-                  {filterDistributor && (
-                    <span className="bg-zinc-200 text-zinc-800 px-2 py-1 flex items-center gap-1">
-                      分销商: {filterDistributor} <X size={12} className="cursor-pointer hover:text-black" onClick={() => setFilterDistributor(null)} />
-                    </span>
-                  )}
-                  {filterDelivery && (
-                    <span className="bg-zinc-200 text-zinc-800 px-2 py-1 flex items-center gap-1">
-                      配送: {filterDelivery} <X size={12} className="cursor-pointer hover:text-black" onClick={() => setFilterDelivery(null)} />
-                    </span>
-                  )}
-                  {filterWarehouse && (
-                    <span className="bg-zinc-200 text-zinc-800 px-2 py-1 flex items-center gap-1">
-                      仓库: {filterWarehouse} <X size={12} className="cursor-pointer hover:text-black" onClick={() => setFilterWarehouse(null)} />
-                    </span>
-                  )}
-                  <button onClick={() => { setFilterManager(null); setFilterDistributor(null); setFilterDelivery(null); setFilterWarehouse(null); }} className="text-zinc-500 hover:text-black hover:underline ml-2">清除全部</button>
-                </div>
-              )}
+              <div className="flex gap-4 flex-wrap">
+                <SearchableCombobox 
+                  options={Array.from(new Set(INITIAL_ORDERS.map(o => o.manager).filter(Boolean))).map(m => ({ value: m as string, label: m as string }))}
+                  value={filterManager || ''}
+                  onChange={(val) => setFilterManager(val || null)}
+                  placeholder="所有主理人"
+                  className="w-40"
+                />
+                <SearchableCombobox 
+                  options={Array.from(new Set(INITIAL_ORDERS.map(o => o.distributor).filter(Boolean))).map(m => ({ value: m as string, label: m as string }))}
+                  value={filterDistributor || ''}
+                  onChange={(val) => setFilterDistributor(val || null)}
+                  placeholder="全部分销商"
+                  className="w-40"
+                />
+                <select 
+                  value={filterDelivery || ''} 
+                  onChange={(e) => setFilterDelivery(e.target.value || null)}
+                  className="border border-zinc-200 px-3 py-2 text-xs font-bold outline-none bg-zinc-50 hover:bg-zinc-100 cursor-pointer appearance-none pr-8"
+                  style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23131313%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right .7rem top 50%', backgroundSize: '.65rem auto' }}
+                >
+                  <option value="">所有配送</option>
+                  {Array.from(new Set(INITIAL_ORDERS.map(o => o.deliveryMethod).filter(Boolean))).map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+                <select 
+                  value={filterWarehouse || ''} 
+                  onChange={(e) => setFilterWarehouse(e.target.value || null)}
+                  className="border border-zinc-200 px-3 py-2 text-xs font-bold outline-none bg-zinc-50 hover:bg-zinc-100 cursor-pointer appearance-none pr-8"
+                  style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23131313%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right .7rem top 50%', backgroundSize: '.65rem auto' }}
+                >
+                  <option value="">所有仓库</option>
+                  {Array.from(new Set(INITIAL_ORDERS.map(o => o.warehouse).filter(Boolean))).map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
 
@@ -834,17 +847,11 @@ export function OrderManagement() {
                   </div>
                 </div>
                 {order.manager ? (
-                  <span 
-                    className="text-[10px] text-blue-600 md:ml-4 cursor-pointer hover:underline"
-                    onClick={() => setFilterManager(order.manager)}
-                  >
+                  <span className="text-[10px] text-blue-600 md:ml-4">
                     主理人: {order.manager}
                   </span>
                 ) : order.distributor ? (
-                  <span 
-                    className="text-[10px] text-blue-600 md:ml-4 cursor-pointer hover:underline"
-                    onClick={() => setFilterDistributor(order.distributor)}
-                  >
+                  <span className="text-[10px] text-blue-600 md:ml-4">
                     分销商: {order.distributor}
                   </span>
                 ) : null}
@@ -893,10 +900,7 @@ export function OrderManagement() {
                   </div>
                   <div className="md:col-span-1 text-center">
                     <div className="text-xs text-zinc-500 md:hidden mb-1 font-bold italic">配送/物流</div>
-                    <div 
-                      className="text-[10px] font-bold mb-1 text-blue-600 cursor-pointer hover:underline"
-                      onClick={() => setFilterDelivery(order.deliveryMethod)}
-                    >
+                    <div className="text-[10px] font-bold mb-1 text-blue-600">
                       {order.deliveryMethod}
                     </div>
                     {order.shipments?.[0] && (
@@ -904,10 +908,7 @@ export function OrderManagement() {
                         {order.shipments[0].trackingNumber}
                       </div>
                     )}
-                    <div 
-                      className="text-[10px] text-blue-600 cursor-pointer hover:underline"
-                      onClick={() => setFilterWarehouse(order.warehouse)}
-                    >
+                    <div className="text-[10px] text-blue-600">
                       {order.warehouse}
                     </div>
                   </div>

@@ -1,23 +1,13 @@
 import { useState } from "react";
-import { Search, X, Check } from "lucide-react";
+import { Check } from "lucide-react";
 
 interface OfferToMarketplaceProps {
   setActiveTab?: (tab: string) => void;
 }
 
 export function OfferToMarketplace({ setActiveTab }: OfferToMarketplaceProps) {
-  const [isManualMatchOpen, setIsManualMatchOpen] = useState(false);
-  const [selectedPublicSpu, setSelectedPublicSpu] = useState<string | null>(null);
-  const [matchPercentage, setMatchPercentage] = useState<number | null>(null);
-  const [isFallbackModalOpen, setIsFallbackModalOpen] = useState(false);
-  const [skuMatches, setSkuMatches] = useState<Record<string, string>>({
-    's1': 's',
-    's2': 'm'
-  });
   const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [incrementalCount, setIncrementalCount] = useState(128);
-  const [isApplyNewModalOpen, setIsApplyNewModalOpen] = useState(false);
-  const [isAutoPilotEnabled, setIsAutoPilotEnabled] = useState(true);
 
   const handleIncrementalMatch = () => {
     setIsAutoMatching(true);
@@ -27,51 +17,15 @@ export function OfferToMarketplace({ setActiveTab }: OfferToMarketplaceProps) {
     }, 1200);
   };
 
-  const handleCloseManualMatch = () => {
-    setIsManualMatchOpen(false);
-    setSelectedPublicSpu(null);
-    setMatchPercentage(null);
-  };
-
-  const openManualMatch = (percentage: number | null) => {
-    setIsManualMatchOpen(true);
-    setMatchPercentage(percentage);
-    if (percentage && percentage >= 85) {
-      setSelectedPublicSpu('spu1'); // Auto pre-fill if there's a high match
-    } else {
-      setSelectedPublicSpu(null);
-    }
-  };
-
-  const handleSmartMatch = () => {
-    setIsAutoMatching(true);
-    setTimeout(() => {
-      setSkuMatches({
-        's1': 's',
-        's2': 'm'
-      });
-      setIsAutoMatching(false);
-    }, 800);
-  };
-
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-end mb-8">
         <div>
           <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-2">商家管理面板</div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase mb-2">同步引擎与出价</h1>
+          <h1 className="text-3xl font-black tracking-tighter uppercase mb-2">出价到集市</h1>
           <p className="text-sm text-zinc-500">通过 AI 自动化将自有资产同步至全球集市</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 px-3 py-2 rounded-sm">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">自动同步模式 (Auto-Pilot)</span>
-            <button 
-              onClick={() => setIsAutoPilotEnabled(!isAutoPilotEnabled)}
-              className={`w-10 h-5 rounded-full transition-colors relative flex items-center ${isAutoPilotEnabled ? 'bg-black' : 'bg-zinc-200'}`}
-            >
-              <div className={`absolute w-3.5 h-3.5 bg-white rounded-full transition-transform ${isAutoPilotEnabled ? 'translate-x-[22px]' : 'translate-x-[4px]'}`}></div>
-            </button>
-          </div>
           <button className="bg-white border border-zinc-200 text-black px-6 py-3 text-sm font-bold hover:bg-zinc-50 transition-colors uppercase tracking-tight">
             查看同步日志
           </button>
@@ -127,64 +81,7 @@ export function OfferToMarketplace({ setActiveTab }: OfferToMarketplaceProps) {
           <div className="col-span-1 text-center">操作</div>
         </div>
 
-        {/* Row 1: SPU match but SKU mismatch */}
-        <div className="flex flex-col md:grid md:grid-cols-12 gap-4 px-4 md:px-6 py-4 border-b border-zinc-200 items-start md:items-center hover:bg-zinc-50 transition-colors">
-          <div className="flex md:col-span-4 gap-4 items-start md:items-center w-full">
-            <div className="w-16 h-16 bg-zinc-100 p-1 shrink-0">
-              <img src="https://images.unsplash.com/photo-1548171915-e76a3a41117b?auto=format&fit=crop&w=200&q=80" className="w-full h-full object-contain mix-blend-multiply" />
-            </div>
-            <div>
-              <div className="text-sm font-bold mb-1 leading-tight">Patek Philippe Nautilus 5711/1A-010</div>
-              <div className="text-[10px] text-zinc-400">商家货号: PP-5711-BLU</div>
-            </div>
-          </div>
-          <div className="flex md:col-span-4 gap-4 items-start md:items-center w-full border-t border-zinc-100 md:border-t-0 pt-4 md:pt-0">
-            <div className="w-16 h-16 bg-zinc-100 p-1 shrink-0">
-              <img src="https://images.unsplash.com/photo-1548171915-e76a3a41117b?auto=format&fit=crop&w=200&q=80" className="w-full h-full object-contain mix-blend-multiply" />
-            </div>
-            <div>
-              <div className="text-sm font-bold mb-1 leading-tight">百达翡丽鹦鹉螺系列 5711/1A</div>
-              <div className="text-[10px] text-zinc-400">公共货号: PP-5711-ST-BL</div>
-            </div>
-          </div>
-          <div className="hidden md:block col-span-1 text-center font-bold text-green-600">98%</div>
-          <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
-            <div className="text-[10px] font-bold text-orange-600">SKU 定义不匹配</div>
-            <div className="text-[9px] text-zinc-400 mt-1">颜色/材质描述存在差异</div>
-          </div>
-          <div className="md:col-span-1 text-center w-full md:w-auto flex justify-end md:block mt-2 md:mt-0">
-            <button onClick={() => openManualMatch(98)} className="w-full md:w-auto bg-black text-white px-4 py-2 text-[10px] font-bold hover:bg-zinc-800 transition-colors">映射 SKU</button>
-          </div>
-        </div>
-
-        {/* Row 2: Low match */}
-        <div className="flex flex-col md:grid md:grid-cols-12 gap-4 px-4 md:px-6 py-4 border-b border-zinc-200 items-start md:items-center hover:bg-zinc-50 transition-colors opacity-70">
-          <div className="flex md:col-span-4 gap-4 items-start md:items-center w-full">
-            <div className="w-16 h-16 bg-zinc-100 p-1 shrink-0">
-              <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=200&q=80" className="w-full h-full object-contain mix-blend-multiply grayscale" />
-            </div>
-            <div>
-              <div className="text-sm font-bold mb-1 leading-tight">自定义品牌衬衫 2024夏季款</div>
-              <div className="text-[10px] text-zinc-400">商家货号: CUST-SH-01</div>
-            </div>
-          </div>
-          <div className="flex md:col-span-4 gap-4 items-start md:items-center w-full border-t border-zinc-100 md:border-t-0 pt-4 md:pt-0">
-            <div className="w-16 h-16 bg-zinc-50 border border-dashed border-zinc-200 flex items-center justify-center text-zinc-300">
-              <Search size={24} />
-            </div>
-            <div>
-              <div className="text-sm font-bold mb-1 text-zinc-400 italic">未发现强关联 SPU</div>
-              <div className="text-[10px] text-zinc-400">匹配占比 &lt; 85%</div>
-            </div>
-          </div>
-          <div className="hidden md:block col-span-1 text-center font-bold text-zinc-400">12%</div>
-          <div className="hidden md:block col-span-2 text-center text-[10px] text-zinc-400">不满足出价对标条件</div>
-          <div className="md:col-span-1 text-center flex justify-end md:block mt-2 md:mt-0 w-full md:w-auto">
-            <button className="w-full md:w-auto border border-zinc-200 text-zinc-500 px-4 py-2 text-[10px] font-bold hover:bg-zinc-50 transition-colors">申请新增</button>
-          </div>
-        </div>
-
-        {/* Row 3: Perfect match */}
+        {/* Row 1: Perfect match */}
         <div className="flex flex-col md:grid md:grid-cols-12 gap-4 px-4 md:px-6 py-4 border-b border-zinc-200 items-start md:items-center hover:bg-zinc-50 transition-colors">
           <div className="flex md:col-span-4 gap-4 items-start md:items-center w-full">
             <div className="w-16 h-16 bg-zinc-100 p-1 shrink-0">
@@ -206,367 +103,17 @@ export function OfferToMarketplace({ setActiveTab }: OfferToMarketplaceProps) {
           </div>
           <div className="hidden md:block col-span-1 text-center font-bold text-green-600">100%</div>
           <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
-            <div className="text-[10px] font-bold text-green-600 uppercase tracking-widest">全属性吻合</div>
-            <div className="text-[9px] text-zinc-400 mt-1">SPU & SKU 强一致</div>
+            <div className="text-[10px] font-bold text-green-600 uppercase tracking-widest">已匹配</div>
+            <div className="text-[9px] text-zinc-400 mt-1">属性完全对齐</div>
           </div>
           <div className="md:col-span-1 text-center flex justify-end md:block mt-2 md:mt-0 w-full md:w-auto">
             <div className="flex flex-col items-center">
-              <div className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-sm border border-green-100 flex items-center gap-1">
-                <Check size={12} /> 自动同步中
-              </div>
-              <span className="text-[9px] text-zinc-400 mt-1 italic">属性完全对齐</span>
+              <button className="bg-black text-white px-4 py-2 text-[10px] font-bold hover:bg-zinc-800 transition-colors w-full md:w-auto">一键出价</button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Manual Match Modal */}
-      {isManualMatchOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleCloseManualMatch}></div>
-          <div className="relative bg-white w-full h-full md:h-auto md:max-w-4xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col overflow-hidden md:rounded-md">
-            <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-zinc-100">
-              <h2 className="text-base md:text-lg font-black uppercase tracking-tight">手动匹配公共库商品</h2>
-              <button onClick={handleCloseManualMatch} className="text-zinc-400 hover:text-black transition-colors shrink-0"><X size={24} /></button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto">
-            {!selectedPublicSpu ? (
-              <>
-                <div className="p-4 md:p-6">
-                  <div className="flex flex-col md:flex-row gap-8">
-                    {/* Left: My Product */}
-                    <div className="flex-1 md:border-r border-zinc-100 md:pr-8">
-                      <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">我的自营商品</div>
-                      <div className="flex gap-4 items-start mb-6">
-                        <div className="w-24 h-24 bg-zinc-100 p-2">
-                          <img src="https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=200&q=80" className="w-full h-full object-contain mix-blend-multiply" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold mb-2">CHANEL香奈儿 24年秋冬系列单排扣V长袖针织衫 女款 黑色</div>
-                          <div className="text-xs text-zinc-500 mb-1">品牌: CHANEL</div>
-                          <div className="text-xs text-zinc-500 mb-1">分类: 服饰 / 针织衫</div>
-                          <div className="text-xs text-zinc-500 font-mono">货号: P78433-K11320-NZZ03</div>
-                        </div>
-                      </div>
-                      
-                      <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">包含的 SKU</div>
-                      <div className="space-y-2">
-                        <div className="text-xs bg-zinc-50 p-2 border border-zinc-100 flex justify-between">
-                          <span>S码 / 黑色</span>
-                          <span className="font-mono text-zinc-500">条码: 3145891234567</span>
-                        </div>
-                        <div className="text-xs bg-zinc-50 p-2 border border-zinc-100 flex justify-between">
-                          <span>M码 / 黑色</span>
-                          <span className="font-mono text-zinc-500">条码: 3145891234568</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right: Search Public Library */}
-                    <div className="flex-1">
-                      <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">搜索公共库 (选择 SPU)</div>
-                      
-                      <div className="flex gap-2 mb-6">
-                        <div className="flex-1 flex items-center gap-2 border border-zinc-200 px-3 py-2">
-                          <Search size={16} className="text-zinc-400" />
-                          <input 
-                            type="text" 
-                            defaultValue="P78433" 
-                            className="w-full text-sm font-bold outline-none" 
-                            placeholder="输入货号或名称搜索..."
-                          />
-                        </div>
-                        <button className="bg-black text-white px-4 py-2 text-sm font-bold hover:bg-zinc-800 transition-colors">
-                          搜索
-                        </button>
-                      </div>
-
-                      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                        {/* Search Result 1 */}
-                        <label className="flex items-start gap-4 p-3 border border-zinc-200 cursor-pointer hover:border-black transition-colors">
-                          <input type="radio" name="public_spu" className="mt-1 accent-black" />
-                          <div className="flex gap-3">
-                            <div className="w-16 h-16 bg-zinc-100 p-1">
-                              <img src="https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=200&q=80" className="w-full h-full object-contain mix-blend-multiply" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-bold mb-1">Chanel女款V领开衫</div>
-                              <div className="text-xs text-zinc-500 font-mono mb-1">货号: P78433K11320NZZ03</div>
-                              <div className="text-[10px] text-zinc-400">包含 4 个 SKU</div>
-                            </div>
-                          </div>
-                        </label>
-
-                        {/* Search Result 2 */}
-                        <label className="flex items-start gap-4 p-3 border border-zinc-200 cursor-pointer hover:border-black transition-colors">
-                          <input type="radio" name="public_spu" className="mt-1 accent-black" />
-                          <div className="flex gap-3">
-                            <div className="w-16 h-16 bg-zinc-100 p-1">
-                              <img src="https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=200&q=80" className="w-full h-full object-contain mix-blend-multiply grayscale" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-bold mb-1">Chanel女款V领开衫 (灰色款)</div>
-                              <div className="text-xs text-zinc-500 font-mono mb-1">货号: P78433K11320NZZ04</div>
-                              <div className="text-[10px] text-zinc-400">包含 4 个 SKU</div>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 md:p-6 border-t border-zinc-100 bg-zinc-50 flex flex-col sm:flex-row justify-between items-center gap-3">
-                  <button 
-                    onClick={() => setIsApplyNewModalOpen(true)}
-                    className="w-full sm:w-auto px-6 py-2 text-sm font-bold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors"
-                  >
-                    申请新增至公共库
-                  </button>
-                  <div className="flex gap-3 w-full sm:w-auto">
-                    <button onClick={handleCloseManualMatch} className="flex-1 sm:flex-none px-6 py-2 text-sm font-bold text-zinc-600 hover:text-black transition-colors border border-zinc-200 sm:border-none">取消</button>
-                    <button onClick={() => setSelectedPublicSpu('spu1')} className="flex-1 sm:flex-none bg-black text-white px-8 py-2 text-sm font-bold hover:bg-zinc-800 transition-colors text-center">下一步</button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="p-4 md:p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">SKU 映射表</div>
-                    <div className="flex items-center gap-2">
-                       <span className="text-[10px] text-zinc-400 italic">当我的 SKU 多于公共库时: </span>
-                       <button 
-                         className="text-[10px] font-bold text-blue-600 hover:underline border border-blue-100 bg-blue-50/50 px-2 py-0.5"
-                         onClick={() => setIsFallbackModalOpen(true)}
-                       >
-                         配置并引入兜底匹配规则
-                       </button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col md:flex-row gap-4 md:items-center mb-6 p-4 bg-zinc-50 border border-zinc-100">
-                    <div className="flex-1 flex gap-4 items-center border-b md:border-b-0 md:border-r border-zinc-200 pb-4 md:pb-0 md:pr-4">
-                      <div className="w-12 h-12 bg-zinc-100 p-1 flex-shrink-0">
-                        <img src="https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=200&q=80" className="w-full h-full object-contain mix-blend-multiply" />
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">我的自营商品</div>
-                        <div className="text-sm font-bold leading-tight">CHANEL香奈儿 24年秋冬系列单排扣V长袖针织衫 女款 黑色</div>
-                      </div>
-                    </div>
-                    <div className="flex-1 flex gap-4 items-center pt-2 md:pt-0 md:pl-4">
-                      <div className="w-12 h-12 bg-zinc-100 p-1 flex-shrink-0">
-                        <img src="https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=200&q=80" className="w-full h-full object-contain mix-blend-multiply" />
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">公共库商品</div>
-                        <div className="text-sm font-bold leading-tight">Chanel女款V领开衫</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border border-zinc-200">
-                    <div className="grid grid-cols-2 bg-zinc-50 border-b border-zinc-200 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                      <div className="p-3 border-r border-zinc-200">我的 SKU</div>
-                      <div className="p-3 flex justify-between items-center">
-                        <span>映射到公共库 SKU</span>
-                        <button 
-                          onClick={handleSmartMatch}
-                          disabled={isAutoMatching}
-                          className="bg-black text-white text-[10px] px-2 py-1 hover:bg-zinc-800 transition-colors disabled:bg-zinc-300"
-                        >
-                          {isAutoMatching ? '计算中...' : '智能自动匹配'}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 border-b border-zinc-100 items-center">
-                      <div className="p-3 border-r border-zinc-200 text-sm font-bold flex items-center justify-between">
-                        <span>S码 / 黑色</span>
-                        <span className="text-[9px] bg-zinc-100 text-zinc-400 px-1">条码: 3145891...</span>
-                      </div>
-                      <div className="p-3">
-                        <select 
-                          value={skuMatches['s1'] || ''}
-                          onChange={(e) => setSkuMatches({...skuMatches, 's1': e.target.value})}
-                          className="w-full border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-0 outline-none bg-white cursor-pointer"
-                        >
-                          <option value="">请选择匹配的 SKU...</option>
-                          <option value="fallback" className="text-blue-600 font-bold">公共库兜底规格 (兜底)</option>
-                          <option value="s">S码 / 黑色</option>
-                          <option value="m">M码 / 黑色</option>
-                          <option value="l">L码 / 黑色</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 items-center">
-                      <div className="p-3 border-r border-zinc-200 text-sm font-bold flex items-center justify-between">
-                        <span>M码 / 黑色</span>
-                        <span className="text-[9px] bg-zinc-100 text-zinc-400 px-1">条码: 3145891...</span>
-                      </div>
-                      <div className="p-3">
-                        <select 
-                          value={skuMatches['s2'] || ''}
-                          onChange={(e) => setSkuMatches({...skuMatches, 's2': e.target.value})}
-                          className="w-full border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-0 outline-none bg-white cursor-pointer"
-                        >
-                          <option value="">请选择匹配的 SKU...</option>
-                          <option value="fallback" className="text-blue-600 font-bold">公共库兜底规格 (兜底)</option>
-                          <option value="s">S码 / 黑色</option>
-                          <option value="m">M码 / 黑色</option>
-                          <option value="l">L码 / 黑色</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 md:p-6 border-t border-zinc-100 bg-zinc-50 flex flex-col sm:flex-row justify-end gap-3">
-                  <button onClick={() => setSelectedPublicSpu(null)} className="w-full sm:w-auto px-6 py-2 text-sm font-bold text-zinc-600 hover:text-black transition-colors border border-zinc-200 sm:border-none bg-white sm:bg-transparent">上一步</button>
-                  <button onClick={handleCloseManualMatch} className="w-full sm:w-auto bg-black text-white px-8 py-2 text-sm font-bold hover:bg-zinc-800 transition-colors text-center">确认映射并出价</button>
-                </div>
-              </>
-            )}
-            </div>
           </div>
-        </div>
-      )}
-      <FallbackRulesModal isOpen={isFallbackModalOpen} onClose={() => setIsFallbackModalOpen(false)} />
-      <ApplyNewCommonProductModal isOpen={isApplyNewModalOpen} onClose={() => setIsApplyNewModalOpen(false)} />
-    </div>
-  );
-}
-
-function FallbackRulesModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [selectedRule, setSelectedRule] = useState('one_to_many');
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative bg-white w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50">
-          <h2 className="text-sm font-black uppercase tracking-widest">公共库兜底匹配规则配置</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-black transition-colors"><X size={20} /></button>
-        </div>
-        
-        <div className="p-6">
-          <p className="text-xs text-zinc-500 mb-6">当商家 SKU 数量与公共库 SKU 不一致时，系统将根据以下规则自动填充缺口，减少人工操作工作量。</p>
-          
-          <div className="space-y-4">
-            <label className={`block p-4 border transition-all cursor-pointer ${selectedRule === 'one_to_many' ? 'border-black bg-zinc-50' : 'border-zinc-100 hover:border-zinc-200'}`}>
-              <div className="flex items-center gap-3">
-                <input type="radio" checked={selectedRule === 'one_to_many'} onChange={() => setSelectedRule('one_to_many')} className="accent-black" />
-                <div className="font-bold text-sm">一对多自动派发</div>
-              </div>
-              <div className="text-[10px] text-zinc-400 mt-2 ml-7">若公共库只有均码，所有商家 SKU 自动映射到该均码。</div>
-            </label>
-
-            <label className={`block p-4 border transition-all cursor-pointer ${selectedRule === 'keyword_match' ? 'border-black bg-zinc-50' : 'border-zinc-100 hover:border-zinc-200'}`}>
-              <div className="flex items-center gap-3">
-                <input type="radio" checked={selectedRule === 'keyword_match'} onChange={() => setSelectedRule('keyword_match')} className="accent-black" />
-                <div className="font-bold text-sm">关键字模糊映射</div>
-              </div>
-              <div className="text-[10px] text-zinc-400 mt-2 ml-7">根据 S/M/L, 36/37/38 等尺码关键字自动进行拓扑匹配。</div>
-            </label>
-
-            <label className={`block p-4 border transition-all cursor-pointer ${selectedRule === 'fallback_placeholder' ? 'border-black bg-zinc-50' : 'border-zinc-100 hover:border-zinc-200'}`}>
-              <div className="flex items-center gap-3">
-                <input type="radio" checked={selectedRule === 'fallback_placeholder'} onChange={() => setSelectedRule('keyword_match')} className="accent-black" />
-                <div className="font-bold text-sm">创建兜底规格占位符</div>
-              </div>
-              <div className="text-[10px] text-zinc-400 mt-2 ml-7">对于无法匹配的溢出 SKU，自动映射到「公共库默认兜底」规格。</div>
-            </label>
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-zinc-100 flex justify-end gap-3">
-            <button onClick={onClose} className="px-6 py-2 text-xs font-bold border border-zinc-200 hover:bg-zinc-50 transition-colors">取消</button>
-            <button onClick={() => { alert('规则已应用，正在执行预匹配...'); onClose(); }} className="px-6 py-2 bg-black text-white text-xs font-bold hover:bg-zinc-800 transition-colors">应用规则并重算匹配</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ApplyNewCommonProductModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [suggestionName, setSuggestionName] = useState("Chanel 2024AW V-Neck Knitwear Black");
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative bg-white w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200 rounded-lg overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50">
-            <h2 className="text-sm font-black uppercase tracking-widest text-black">申请补录至公共库</h2>
-            <div className="flex items-center gap-4">
-               <span className="text-[10px] font-bold text-zinc-400 bg-white border border-zinc-200 px-2 py-0.5 rounded-full">状态: 审核中</span>
-               <button onClick={onClose} className="text-zinc-400 hover:text-black transition-colors"><X size={20} /></button>
-            </div>
-          </div>
-          
-          <div className="p-6 space-y-6 overflow-y-auto max-h-[80vh]">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="group">
-                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 group-hover:text-black transition-colors">商家 SPU 名称</label>
-                <div className="bg-zinc-50 border border-zinc-100 p-3 text-sm font-bold text-zinc-600 leading-tight">
-                  CHANEL香奈儿 24年秋冬系列单排扣V长袖针织衫 女款 黑色
-                </div>
-              </div>
-              <div className="group">
-                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 group-hover:text-black transition-colors">已映射分类 (只读)</label>
-                <div className="bg-zinc-100 border border-zinc-200 p-3 text-sm font-bold text-zinc-500 flex items-center justify-between">
-                  <span>奢侈品 {'>'} 香奈儿 {'>'} 针织衫</span>
-                  <span className="text-[9px] bg-zinc-200 px-1 text-zinc-400">全局对齐完成</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="group">
-              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 group-hover:text-black transition-colors">公共库建议名称 (推荐语)</label>
-              <input 
-                type="text" 
-                value={suggestionName}
-                onChange={(e) => setSuggestionName(e.target.value)}
-                className="w-full border border-zinc-200 px-4 py-3 text-sm font-bold focus:border-black outline-none bg-white"
-              />
-              <p className="text-[10px] text-zinc-400 mt-1 italic">名称建议使用国际通用写法或标准中文规范，便于其它商家索引</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="group">
-                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 group-hover:text-black transition-colors">商家主货号</label>
-                <div className="bg-zinc-50 border border-zinc-100 p-3 text-sm font-bold text-zinc-600">P78433-K11320-NZZ03</div>
-              </div>
-              <div className="group">
-                 <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 group-hover:text-black transition-colors">SPU 图片素材</label>
-                 <div className="flex gap-2">
-                    <div className="w-12 h-12 border border-zinc-200 p-1 bg-white">
-                       <img src="https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=100&q=80" className="w-full h-full object-contain" />
-                    </div>
-                    <div className="w-12 h-12 border border-dashed border-zinc-200 flex items-center justify-center text-zinc-300 hover:border-black hover:text-black transition-all cursor-pointer">
-                       <X size={16} className="rotate-45" />
-                    </div>
-                 </div>
-              </div>
-            </div>
-
-            <div className="group">
-               <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 text-blue-600 group-hover:text-blue-800 transition-colors">补录说明 (必填)</label>
-               <textarea 
-                 placeholder="描述该商品在公共库缺失的原因，或上传辅助证明材料链接..."
-                 className="w-full border border-zinc-200 p-4 text-sm outline-none focus:border-black h-24 placeholder:italic"
-               />
-            </div>
-          </div>
-
-          <div className="p-6 border-t border-zinc-100 bg-zinc-50 flex justify-end gap-3">
-             <button onClick={onClose} className="px-6 py-2 text-xs font-bold text-zinc-600 hover:text-black">取消</button>
-             <button onClick={() => { alert('申请已提交，审核周期通常为1-2个工作日。'); onClose(); }} className="bg-black text-white px-8 py-2 text-xs font-bold hover:bg-zinc-800 transition-colors">确认并提交审核</button>
-          </div>
-      </div>
-    </div>
   );
 }
