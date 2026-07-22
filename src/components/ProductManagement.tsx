@@ -226,68 +226,60 @@ export function ProductManagement() {
               </div>
             </div>
 
-            {/* Row 2 */}
-            <div className="border-b border-zinc-200 group">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors">
-                <div className="md:col-span-4 flex items-start md:items-center gap-4">
-                  <input 
-                    type="checkbox" 
-                    className="accent-black w-4 h-4 mt-2 md:mt-0 shrink-0" 
-                    checked={selectedProducts.includes('burberry')}
-                    onChange={(e) => {
-                      if (e.target.checked) setSelectedProducts([...selectedProducts, 'burberry']);
-                      else setSelectedProducts(selectedProducts.filter(id => id !== 'burberry'));
-                    }}
-                  />
-                  <div className="w-20 h-20 md:w-16 md:h-16 shrink-0 bg-zinc-100 flex items-center justify-center p-2">
-                    <img src="https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=200&q=80" alt="Burberry" className="w-full h-full object-contain mix-blend-multiply grayscale group-hover:grayscale-0 transition-all" />
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Burberry</div>
-                    <div className="text-base font-black tracking-tight leading-none mb-2">经典格纹纯棉衬衫</div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="bg-black text-white text-[9px] px-1.5 py-0.5 font-mono uppercase">BB-SHIRT-CHK</span>
-                      <span className="text-[10px] text-zinc-500">4 个 SKU 已上架</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="hidden md:flex col-span-2 flex-col justify-center px-2 items-end">
-                  <span className="text-sm font-bold font-mono">¥3,800</span>
-                </div>
-                <div className="hidden md:flex col-span-1 flex-col justify-center px-2 items-end">
-                  <span className="text-xs text-orange-600 font-bold shrink-0">92-95%</span>
-                </div>
-
-                <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
-                  <div className="text-base font-black">15</div>
-                  <div className="text-[10px] text-zinc-400 mt-1">总可用</div>
-                </div>
-
-                <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
-                   <div className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-sm">未出价</div>
-                   <div className="text-[9px] text-orange-500 mt-1 uppercase tracking-tighter tracking-widest font-bold">未匹配/异常</div>
-                </div>
-                
-                <div className="mt-2 md:mt-0 md:col-span-1 flex flex-col items-end gap-2 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto pr-2">
-                  <button className="w-full text-[10px] font-bold text-orange-600 border border-orange-600 py-1 hover:bg-orange-50 transition-colors uppercase tracking-widest whitespace-nowrap">申请新建公共库</button>
-                  <button className="text-xs font-bold text-zinc-600 hover:text-black transition-colors mt-1" onClick={() => setEditingSpu('burberry')}>编辑详情</button>
-                </div>
-              </div>
-            </div>
           </>
         )}
 
         {activeListTab === 'pending_mapping' && (
-          <div className="border-b border-zinc-200 p-12 flex flex-col items-center justify-center text-center bg-zinc-50/50">
-            <div className="w-16 h-16 bg-white border border-zinc-100 rounded-full flex items-center justify-center mb-4 shadow-sm">
-              <Search size={24} className="text-zinc-300" />
+          <div className="border-b border-zinc-200 group">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors">
+              <div className="md:col-span-4 flex items-start md:items-center gap-4">
+                <input 
+                  type="checkbox" 
+                  className="accent-black w-4 h-4 mt-2 md:mt-0 shrink-0" 
+                  checked={selectedProducts.includes('burberry')}
+                  onChange={(e) => {
+                    if (e.target.checked) setSelectedProducts([...selectedProducts, 'burberry']);
+                    else setSelectedProducts(selectedProducts.filter(id => id !== 'burberry'));
+                  }}
+                />
+                <div className="w-20 h-20 md:w-16 md:h-16 shrink-0 bg-zinc-100 flex items-center justify-center p-2">
+                  <img src="https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=200&q=80" alt="Burberry" className="w-full h-full object-contain mix-blend-multiply grayscale group-hover:grayscale-0 transition-all" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Burberry</div>
+                  <div className="text-base font-black tracking-tight leading-none mb-2">经典格纹纯棉衬衫</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="bg-black text-white text-[9px] px-1.5 py-0.5 font-mono uppercase">BB-SHIRT-CHK</span>
+                    <span className="text-[10px] text-zinc-500">4 个 SKU 已上架</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden md:flex col-span-2 flex-col justify-center px-2 items-end">
+                <span className="text-sm font-bold font-mono">¥3,800</span>
+              </div>
+              <div className="hidden md:flex col-span-1 flex-col justify-center px-2 items-end">
+                <span className="text-xs text-orange-600 font-bold shrink-0">92-95%</span>
+              </div>
+
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                <div className="text-base font-black">15</div>
+                <div className="text-[10px] text-zinc-400 mt-1">总可用</div>
+              </div>
+
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                 <div className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-sm">未出价</div>
+                 <div className="text-[9px] text-orange-500 mt-1 uppercase tracking-tighter tracking-widest font-bold">未匹配/异常</div>
+              </div>
+              
+              <div className="mt-2 md:mt-0 md:col-span-1 flex flex-col items-end gap-2 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto pr-2">
+                <button className="w-full text-[10px] font-bold text-orange-600 border border-orange-600 py-1 hover:bg-orange-50 transition-colors uppercase tracking-widest whitespace-nowrap">申请新建公共库</button>
+                <button className="text-xs font-bold text-zinc-600 hover:text-black transition-colors mt-1" onClick={() => setEditingSpu('burberry')}>编辑详情</button>
+              </div>
             </div>
-            <h3 className="text-sm font-bold mb-2">暂无待补录商品</h3>
-            <p className="text-xs text-zinc-400 max-w-sm mb-0">所有自营商品已完成公共库匹配，或已在补录审核流程中。</p>
           </div>
         )}
-        {(activeListTab === 'offline') && (
+        {activeListTab === 'pending_mapping' && (
           <div className="border-b border-zinc-200 group">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors">
               <div className="md:col-span-4 flex items-start md:items-center gap-4">
@@ -308,30 +300,38 @@ export function ProductManagement() {
                   <div className="text-base font-black tracking-tight leading-none mb-2">Ophidia GG 小号托特包</div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="bg-black text-white text-[9px] px-1.5 py-0.5 font-mono uppercase">GC-547551</span>
-                    <span className="text-[10px] text-orange-500 font-medium bg-orange-50 px-1 rounded-sm">未映射公共库</span>
+                    <span className="text-[10px] text-zinc-500">2 个 SKU 已上架</span>
                   </div>
                 </div>
               </div>
 
-              <div className="hidden md:flex col-span-4 flex-col items-center justify-center gap-1">
-                <div className="text-xs font-bold">均码</div>
-                <div className="text-[10px] text-zinc-500">香港直邮仓</div>
+              <div className="hidden md:flex col-span-2 flex-col justify-center px-2 items-end">
+                <span className="text-sm font-bold font-mono">¥12,500</span>
+              </div>
+              <div className="hidden md:flex col-span-1 flex-col justify-center px-2 items-end">
+                <span className="text-xs text-orange-600 font-bold shrink-0">85-90%</span>
               </div>
 
               <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
-                 <div className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-sm uppercase">待新增公共库</div>
+                <div className="text-base font-black">5</div>
+                <div className="text-[10px] text-zinc-400 mt-1">总可用</div>
+              </div>
+
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                 <div className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-sm">未出价</div>
+                 <div className="text-[9px] text-orange-500 mt-1 uppercase tracking-tighter tracking-widest font-bold">未匹配/异常</div>
               </div>
               
-              <div className="mt-2 md:mt-0 md:col-span-2 flex justify-end md:justify-center items-center gap-4 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto">
-                <button className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors" onClick={() => setIsBatchApplyModalOpen(true)}>申请映射</button>
-                <button className="text-xs font-bold text-red-600 hover:text-red-700 transition-colors">删除</button>
+              <div className="mt-2 md:mt-0 md:col-span-1 flex flex-col items-end gap-2 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto pr-2">
+                <button className="w-full text-[10px] font-bold text-orange-600 border border-orange-600 py-1 hover:bg-orange-50 transition-colors uppercase tracking-widest whitespace-nowrap" onClick={() => setIsBatchApplyModalOpen(true)}>申请映射</button>
+                <button className="text-xs font-bold text-zinc-600 hover:text-black transition-colors mt-1" onClick={() => setEditingSpu('gucci')}>编辑详情</button>
               </div>
             </div>
           </div>
         )}
 
         {activeListTab === 'offline' && (
-          <div className="group opacity-75">
+          <div className="group opacity-75 border-b border-zinc-200">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors text-zinc-500">
               <div className="md:col-span-4 flex items-start md:items-center gap-4">
                 <input 
@@ -351,23 +351,122 @@ export function ProductManagement() {
                   <div className="text-base font-black tracking-tight leading-none mb-2 text-zinc-400">Nautilus 5711/1A</div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="bg-zinc-300 text-zinc-600 text-[9px] px-1.5 py-0.5 font-mono uppercase">PP-5711-BLU</span>
-                    <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1 rounded-sm">已下架</span>
+                    <span className="text-[10px] text-zinc-500">1 个 SKU 已建档</span>
                   </div>
                 </div>
               </div>
 
-              <div className="hidden md:flex col-span-4 flex-col items-center justify-center gap-1 opacity-50">
-                <div className="text-xs font-bold">均码</div>
-                <div className="text-[10px] text-zinc-400">欧洲仓 (EU)</div>
+              <div className="hidden md:flex col-span-2 flex-col justify-center px-2 items-end">
+                <span className="text-sm font-bold font-mono">¥350,000</span>
+              </div>
+              <div className="hidden md:flex col-span-1 flex-col justify-center px-2 items-end">
+                <span className="text-xs text-zinc-400 font-bold shrink-0">-</span>
               </div>
 
-              <div className="hidden md:flex col-span-2 flex-col items-center justify-center opacity-50">
-                 <div className="text-[10px] font-bold text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-sm">离线</div>
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                <div className="text-base font-black text-zinc-400">2</div>
+                <div className="text-[10px] text-zinc-400 mt-1">总可用</div>
               </div>
 
-              <div className="mt-2 md:mt-0 md:col-span-2 flex justify-end md:justify-center items-center gap-4 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto">
-                <button className="text-xs font-bold text-zinc-600 hover:text-black transition-colors" onClick={() => setEditingSpu('patek')}>详情</button>
-                <button className="text-xs font-bold text-red-600 hover:text-red-700 transition-colors">删除</button>
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                 <div className="text-[10px] font-bold text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded-sm">主动下架</div>
+                 <div className="text-[9px] text-zinc-400 mt-1 uppercase tracking-tighter tracking-widest font-bold">仓库中</div>
+              </div>
+              
+              <div className="mt-2 md:mt-0 md:col-span-1 flex flex-col items-end gap-2 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto pr-2">
+                <button className="w-full text-[10px] font-bold text-zinc-600 border border-zinc-300 py-1 hover:bg-zinc-100 transition-colors uppercase tracking-widest whitespace-nowrap">重新上架</button>
+                <button className="text-xs font-bold text-zinc-600 hover:text-black transition-colors mt-1" onClick={() => setEditingSpu('patek')}>编辑详情</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeListTab === 'offline' && (
+          <div className="group opacity-75 border-b border-zinc-200">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors text-zinc-500">
+              <div className="md:col-span-4 flex items-start md:items-center gap-4">
+                <input 
+                  type="checkbox" 
+                  className="accent-black w-4 h-4 mt-2 md:mt-0 shrink-0" 
+                />
+                <div className="w-20 h-20 md:w-16 md:h-16 shrink-0 bg-zinc-100 flex flex-col items-center justify-center p-2 border border-dashed border-zinc-300 text-zinc-400">
+                  <ImageIcon size={16} className="mb-1 opacity-50" />
+                  <span className="text-[8px] uppercase tracking-widest font-bold">无图片</span>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Celine</div>
+                  <div className="text-base font-black tracking-tight leading-none mb-2 text-zinc-400">Triomphe 凯旋门腋下包</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="bg-zinc-300 text-zinc-600 text-[9px] px-1.5 py-0.5 font-mono uppercase">CE-TRI-BLK</span>
+                    <span className="text-[10px] text-zinc-500">缺素材</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden md:flex col-span-2 flex-col justify-center px-2 items-end">
+                <span className="text-sm font-bold font-mono">¥21,500</span>
+              </div>
+              <div className="hidden md:flex col-span-1 flex-col justify-center px-2 items-end">
+                <span className="text-xs text-zinc-400 font-bold shrink-0">-</span>
+              </div>
+
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                <div className="text-base font-black text-zinc-400">5</div>
+                <div className="text-[10px] text-zinc-400 mt-1">总可用</div>
+              </div>
+
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                 <div className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-sm">资料不全</div>
+                 <div className="text-[9px] text-zinc-400 mt-1 uppercase tracking-tighter tracking-widest font-bold">仓库中</div>
+              </div>
+              
+              <div className="mt-2 md:mt-0 md:col-span-1 flex flex-col items-end gap-2 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto pr-2">
+                <button className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors mt-1">补充素材</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeListTab === 'sold_out' && (
+          <div className="group border-b border-zinc-200">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 md:px-6 py-4 md:py-6 items-start md:items-center hover:bg-zinc-50 transition-colors">
+              <div className="md:col-span-4 flex items-start md:items-center gap-4 opacity-50">
+                <input 
+                  type="checkbox" 
+                  className="accent-black w-4 h-4 mt-2 md:mt-0 shrink-0" 
+                />
+                <div className="w-20 h-20 md:w-16 md:h-16 shrink-0 bg-zinc-100 flex items-center justify-center p-2">
+                  <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=200&q=80" alt="Bottega Veneta" className="w-full h-full object-contain mix-blend-multiply grayscale" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Bottega Veneta</div>
+                  <div className="text-base font-black tracking-tight leading-none mb-2 text-zinc-400">Mini Jodie 羊皮手袋</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="bg-zinc-300 text-zinc-600 text-[9px] px-1.5 py-0.5 font-mono uppercase">BV-MINI-JODIE</span>
+                    <span className="text-[10px] text-zinc-500">已售罄下架</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden md:flex col-span-2 flex-col justify-center px-2 items-end opacity-50">
+                <span className="text-sm font-bold font-mono">¥19,500</span>
+              </div>
+              <div className="hidden md:flex col-span-1 flex-col justify-center px-2 items-end opacity-50">
+                <span className="text-xs text-zinc-400 font-bold shrink-0">-</span>
+              </div>
+
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                <div className="text-base font-black text-red-500">0</div>
+                <div className="text-[10px] text-zinc-400 mt-1">总可用</div>
+              </div>
+
+              <div className="hidden md:flex col-span-2 flex-col items-center justify-center">
+                 <div className="text-[10px] font-bold text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded-sm">系统自动下架</div>
+                 <div className="text-[9px] text-zinc-400 mt-1 uppercase tracking-tighter tracking-widest font-bold">无库存</div>
+              </div>
+              
+              <div className="mt-2 md:mt-0 md:col-span-1 flex flex-col items-end gap-2 pt-4 md:pt-0 border-t border-zinc-100 md:border-none w-full md:w-auto pr-2">
+                <button className="text-xs font-bold text-zinc-600 hover:text-black transition-colors mt-1">查看采购单</button>
               </div>
             </div>
           </div>

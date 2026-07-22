@@ -126,7 +126,7 @@ export function DistributorOrderManagement() {
 
   // After-sales state
   const [isAfterSalesModalOpen, setIsAfterSalesModalOpen] = useState(false);
-  const [afterSalesDecision, setAfterSalesDecision] = useState<'refund' | 'exchange' | 'reject' | 'refund_only' | null>(null);
+  const [afterSalesDecision, setAfterSalesDecision] = useState<'agree' | 'reject' | null>(null);
   const [afterSalesReason, setAfterSalesReason] = useState('');
 
   const handleUpdatePrice = () => {
@@ -1002,27 +1002,13 @@ export function DistributorOrderManagement() {
 
               <div className="mb-6">
                 <label className="block text-xs font-bold text-zinc-500 mb-3">处理决定</label>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <button 
-                    onClick={() => setAfterSalesDecision('refund_only')}
-                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'refund_only' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
+                    onClick={() => setAfterSalesDecision('agree')}
+                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'agree' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
                   >
-                    <span className="text-sm font-bold">同意仅退款</span>
-                    <span className="text-[9px] text-zinc-500 leading-tight">拦截发货, 直接退款</span>
-                  </button>
-                  <button 
-                    onClick={() => setAfterSalesDecision('refund')}
-                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'refund' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
-                  >
-                    <span className="text-sm font-bold">同意退货退款</span>
-                    <span className="text-[9px] text-zinc-500 leading-tight">寄回后退款</span>
-                  </button>
-                  <button 
-                    onClick={() => setAfterSalesDecision('exchange')}
-                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'exchange' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
-                  >
-                    <span className="text-sm font-bold">同意换货</span>
-                    <span className="text-[9px] text-zinc-500 leading-tight">寄回后换新</span>
+                    <span className="text-sm font-bold">同意申请</span>
+                    <span className="text-[9px] text-zinc-500 leading-tight">同意顾客的售后诉求</span>
                   </button>
                   <button 
                     onClick={() => setAfterSalesDecision('reject')}
@@ -1046,7 +1032,7 @@ export function DistributorOrderManagement() {
                 </div>
               )}
 
-              {(afterSalesDecision === 'refund_only' || afterSalesDecision === 'refund' || afterSalesDecision === 'exchange') && (
+              {afterSalesDecision === 'agree' && (
                 <div className="mb-6">
                   <label className="block text-xs font-bold text-zinc-500 mb-2">处理备注 (内部可见)</label>
                   <textarea 
@@ -1070,7 +1056,7 @@ export function DistributorOrderManagement() {
                   onClick={() => {
                     if (!selectedOrderData || !afterSalesDecision) return;
                     
-                    const actionText = afterSalesDecision === 'refund_only' ? '同意仅退款' : afterSalesDecision === 'refund' ? '同意退货退款' : afterSalesDecision === 'exchange' ? '同意换货' : '驳回售后申请';
+                    const actionText = afterSalesDecision === 'agree' ? '同意售后申请' : '驳回售后申请';
                     const newProgress = {
                       id: `p${Date.now()}`,
                       time: new Date().toLocaleString('zh-CN', { hour12: false }),
@@ -1084,7 +1070,7 @@ export function DistributorOrderManagement() {
                         return {
                           ...o,
                           status: afterSalesDecision === 'reject' ? o.status : 'after_sales',
-                          statusLabel: afterSalesDecision === 'refund_only' ? '待退款' : afterSalesDecision === 'reject' ? o.statusLabel : '待顾客退回',
+                          statusLabel: afterSalesDecision === 'reject' ? o.statusLabel : '待处理',
                           progress: [newProgress, ...(o.progress || [])]
                         };
                       }

@@ -195,7 +195,7 @@ export function OrderManagement() {
   const [filterWarehouse, setFilterWarehouse] = useState<string | null>(null);
 
   const [isAfterSalesModalOpen, setIsAfterSalesModalOpen] = useState(false);
-  const [afterSalesDecision, setAfterSalesDecision] = useState<'refund' | 'exchange' | 'reject' | 'refund_only' | null>(null);
+  const [afterSalesDecision, setAfterSalesDecision] = useState<'agree' | 'reject' | null>(null);
   const [afterSalesReason, setAfterSalesReason] = useState('');
   
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -1755,27 +1755,13 @@ export function OrderManagement() {
 
               <div className="mb-6">
                 <label className="block text-xs font-bold text-zinc-500 mb-3">审核处理</label>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <button 
-                    onClick={() => setAfterSalesDecision('refund_only')}
-                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'refund_only' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
+                    onClick={() => setAfterSalesDecision('agree')}
+                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'agree' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
                   >
-                    <span className="text-sm font-bold">同意仅退款</span>
-                    <span className="text-[9px] text-zinc-500 leading-tight">拦截发货, 直接退款</span>
-                  </button>
-                  <button 
-                    onClick={() => setAfterSalesDecision('refund')}
-                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'refund' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
-                  >
-                    <span className="text-sm font-bold">同意退货退款</span>
-                    <span className="text-[9px] text-zinc-500 leading-tight">寄回后退款</span>
-                  </button>
-                  <button 
-                    onClick={() => setAfterSalesDecision('exchange')}
-                    className={`border px-2 py-3 text-center flex flex-col items-center justify-center gap-2 transition-colors ${afterSalesDecision === 'exchange' ? 'border-black border-2 bg-zinc-50' : 'border-zinc-200 hover:border-black'}`}
-                  >
-                    <span className="text-sm font-bold">同意换新</span>
-                    <span className="text-[9px] text-zinc-500 leading-tight">寄回后换新</span>
+                    <span className="text-sm font-bold">同意申请</span>
+                    <span className="text-[9px] text-zinc-500 leading-tight">同意顾客/主理人发起的售后诉求</span>
                   </button>
                   <button 
                     onClick={() => setAfterSalesDecision('reject')}
@@ -1799,7 +1785,7 @@ export function OrderManagement() {
                 </div>
               )}
 
-              {(afterSalesDecision === 'refund_only' || afterSalesDecision === 'refund' || afterSalesDecision === 'exchange') && (
+              {afterSalesDecision === 'agree' && (
                 <div className="mb-6">
                   <label className="block text-xs font-bold text-zinc-500 mb-2">审批备注 (选填，仅内网可见)</label>
                   <textarea 
@@ -1827,14 +1813,12 @@ export function OrderManagement() {
                       if (orderIndex === -1) return prevOrders;
                       const order = prevOrders[orderIndex];
 
-                      const actionText = afterSalesDecision === 'refund_only' ? '同意仅退款' : afterSalesDecision === 'refund' ? '同意退货退款' : afterSalesDecision === 'exchange' ? '同意换货' : '驳回申请';
+                      const actionText = afterSalesDecision === 'agree' ? '同意申请' : '驳回申请';
                       const newProgress = { id: `p-${Date.now()}`, time: now, description: `审核确认完毕: ${actionText}`, items: `已选 (${selectedItems.length}件)`, amountChange: '-' };
 
                       const updatedItems = order.items.map(item => {
                         if (selectedItems.includes(item.id)) {
-                          // In a real app we'd map to 'warehouse_inspect', 'refunded' etc based on the action,
-                          // For demo, we just mark as closed indicating the flow moved forward
-                          return { ...item, status: 'after_sales', statusLabel: afterSalesDecision === 'reject' ? '售后已驳回' : afterSalesDecision === 'refund_only' ? '处理中' : '待顾客退回' };
+                          return { ...item, status: 'after_sales', statusLabel: afterSalesDecision === 'reject' ? '售后已驳回' : '待处理' };
                         }
                         return item;
                       });
@@ -1844,7 +1828,7 @@ export function OrderManagement() {
                         ...order,
                         items: updatedItems,
                         status: updatedItems.every(i => i.status === 'after_sales') ? 'after_sales' : order.status,
-                        statusLabel: afterSalesDecision === 'reject' ? '已驳回' : '待顾客退回',
+                        statusLabel: afterSalesDecision === 'reject' ? '已驳回' : '待处理',
                         progress: [...(order.progress || []), newProgress]
                       };
                       return newOrders;
